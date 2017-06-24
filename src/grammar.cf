@@ -1,0 +1,42 @@
+--- based on https://ci.apache.org/projects/asterixdb/sqlpp/manual.html
+
+OpExpCons. Expression ::= OpExp ;
+--- CaseExp. Expression ::= CaseExpression ;
+--- QuanExp. Expression ::= QuantifiedExpression ;
+
+
+-- operator expression
+-- PathOpExp.   OpExp  ::= PathExpression ;
+ExistsOpExp. OpExp1 ::= "EXISTS" OpExp ;
+NoExisOpExp. OpExp1 ::= "NOT" "EXISTS" OpExp ;
+ExponeOpExp. OpExp2 ::= OpExp1 "^" OpExp1 ;
+MultipOpExp. OpExp3 ::= OpExp2 "*" OpExp2 ;
+DivisiOpExp. OpExp3 ::= OpExp2 "/" OpExp2 ;
+ModuloOpExp. OpExp3 ::= OpExp2 "%" OpExp2 ;
+AdditiOpExp. OpExp4 ::= OpExp3 "+" OpExp3 ;
+SubstrOpExp. OpExp4 ::= OpExp3 "-" OpExp3 ;
+ConcatOpExp. OpExp5 ::= OpExp4 "||" OpExp4 ;
+IsNullOpExp. OpExp6 ::= OpExp5 "IS" "NULL" ;
+NoNullOpExp. OpExp6 ::= OpExp5 "IS" "NOT" "NULL" ;
+IsMissOpExp. OpExp6 ::= OpExp5 "IS" "MISSING" ;
+NoMissOpExp. OpExp6 ::= OpExp5 "IS" "NOT" "MISSING" ;
+IsUnknOpExp. OpExp7 ::= OpExp6 "IS" "UNKNOWN" ;
+NoUnknOpExp. OpExp7 ::= OpExp6 "IS" "NOT" "UNKNOWN" ;
+IsBtwnOpExp. OpExp8 ::= OpExp7 "BETWEEN" OpExp7 "AND" OpExp7 ;
+NoBtwnOpExp. OpExp8 ::= OpExp7 "NOT" "BETWEEN" OpExp7 "AND" OpExp7 ;
+IsEquaOpExp. OpExp9 ::= OpExp8 "=" OpExp8 ;
+NoEquaOpExp. OpExp9 ::= OpExp8"!=" OpExp8 ;
+NoEquaOpExp. OpExp9 ::= OpExp8 "<>" OpExp8 ;
+GraterOpExp. OpExp9 ::= OpExp8 ">" OpExp8 ;
+GrOrEqOpExp. OpExp9 ::= OpExp8 ">=" OpExp8 ;
+SmalerOpExp. OpExp9 ::= OpExp8 "<" OpExp8 ;
+SmOrEqOpExp. OpExp9 ::= OpExp8 "<=" OpExp8 ; 
+IsLikeOpExp. OpExp9 ::= OpExp8 "LIKE" OpExp8 ;
+NoLikeOpExp. OpExp9 ::= OpExp8 "NOT" "LIKE" OpExp8 ;
+IsIn__OpExp. OpExp9 ::= OpExp8 "IN" OpExp8 ;
+NoIn__OpExp. OpExp9 ::= OpExp8 "NOT" "IN" OpExp8 ;
+NegatiOpExp. OpExp10 ::= "NOT" OpExp9 ;
+ConiunOpExp. OpExp11 ::= OpExp10 "AND" OpExp10 ;
+AlternOpExp. OpExp12 ::= OpExp11 "OR" OpExp11 ;
+
+coercions OpExp 12 ;
