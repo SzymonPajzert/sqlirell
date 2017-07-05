@@ -1,42 +1,80 @@
 --- based on https://ci.apache.org/projects/asterixdb/sqlpp/manual.html
+-- TODO make all expressions finish with Expr
 
-OpExpCons. Expression ::= OpExp ;
---- CaseExp. Expression ::= CaseExpression ;
+OpExpCons. Expression ::= OpExpr ;
+CaseExp. Expression ::= CaseExpr ;
 --- QuanExp. Expression ::= QuantifiedExpression ;
 
 
 -- operator expression
--- PathOpExp.   OpExp  ::= PathExpression ;
-ExistsOpExp. OpExp1 ::= "EXISTS" OpExp ;
-NoExisOpExp. OpExp1 ::= "NOT" "EXISTS" OpExp ;
-ExponeOpExp. OpExp2 ::= OpExp1 "^" OpExp1 ;
-MultipOpExp. OpExp3 ::= OpExp2 "*" OpExp2 ;
-DivisiOpExp. OpExp3 ::= OpExp2 "/" OpExp2 ;
-ModuloOpExp. OpExp3 ::= OpExp2 "%" OpExp2 ;
-AdditiOpExp. OpExp4 ::= OpExp3 "+" OpExp3 ;
-SubstrOpExp. OpExp4 ::= OpExp3 "-" OpExp3 ;
-ConcatOpExp. OpExp5 ::= OpExp4 "||" OpExp4 ;
-IsNullOpExp. OpExp6 ::= OpExp5 "IS" "NULL" ;
-NoNullOpExp. OpExp6 ::= OpExp5 "IS" "NOT" "NULL" ;
-IsMissOpExp. OpExp6 ::= OpExp5 "IS" "MISSING" ;
-NoMissOpExp. OpExp6 ::= OpExp5 "IS" "NOT" "MISSING" ;
-IsUnknOpExp. OpExp7 ::= OpExp6 "IS" "UNKNOWN" ;
-NoUnknOpExp. OpExp7 ::= OpExp6 "IS" "NOT" "UNKNOWN" ;
-IsBtwnOpExp. OpExp8 ::= OpExp7 "BETWEEN" OpExp7 "AND" OpExp7 ;
-NoBtwnOpExp. OpExp8 ::= OpExp7 "NOT" "BETWEEN" OpExp7 "AND" OpExp7 ;
-IsEquaOpExp. OpExp9 ::= OpExp8 "=" OpExp8 ;
-NoEquaOpExp. OpExp9 ::= OpExp8"!=" OpExp8 ;
-NoEquaOpExp. OpExp9 ::= OpExp8 "<>" OpExp8 ;
-GraterOpExp. OpExp9 ::= OpExp8 ">" OpExp8 ;
-GrOrEqOpExp. OpExp9 ::= OpExp8 ">=" OpExp8 ;
-SmalerOpExp. OpExp9 ::= OpExp8 "<" OpExp8 ;
-SmOrEqOpExp. OpExp9 ::= OpExp8 "<=" OpExp8 ; 
-IsLikeOpExp. OpExp9 ::= OpExp8 "LIKE" OpExp8 ;
-NoLikeOpExp. OpExp9 ::= OpExp8 "NOT" "LIKE" OpExp8 ;
-IsIn__OpExp. OpExp9 ::= OpExp8 "IN" OpExp8 ;
-NoIn__OpExp. OpExp9 ::= OpExp8 "NOT" "IN" OpExp8 ;
-NegatiOpExp. OpExp10 ::= "NOT" OpExp9 ;
-ConiunOpExp. OpExp11 ::= OpExp10 "AND" OpExp10 ;
-AlternOpExp. OpExp12 ::= OpExp11 "OR" OpExp11 ;
+PathOpExpr.   OpExpr13 ::= PathExpr ;
+ExistsOpExpr. OpExpr12 ::= "EXISTS" OpExpr13 ;
+NoExisOpExpr. OpExpr11 ::= "NOT EXISTS" OpExpr12 ; -- TODO insert whitespaces 
+ExponeOpExpr. OpExpr11 ::= OpExpr11 "^" OpExpr12 ; -- TODO check associativity
+MultipOpExpr. OpExpr10 ::= OpExpr10 "*" OpExpr11 ;
+DivisiOpExpr. OpExpr10 ::= OpExpr10 "/" OpExpr11 ;
+ModuloOpExpr. OpExpr10 ::= OpExpr10 "%" OpExpr11 ;
+AdditiOpExpr. OpExpr9 ::= OpExpr9 "+" OpExpr10 ;
+SubstrOpExpr. OpExpr9 ::= OpExpr9 "-" OpExpr10 ;
+ConcatOpExpr. OpExpr8 ::= OpExpr8 "||" OpExpr9 ;
+IsNullOpExpr. OpExpr6 ::= OpExpr7 "IS" "NULL" OpExpr7 ;
+NoNullOpExpr. OpExpr6 ::= OpExpr7 "IS" "NOT" "NULL" OpExpr7 ;
+IsMissOpExpr. OpExpr6 ::= OpExpr7 "IS" "MISSING" OpExpr7 ;
+NoMissOpExpr. OpExpr6 ::= OpExpr7 "IS NOT" "MISSING" OpExpr7 ;
+IsUnknOpExpr. OpExpr5 ::= OpExpr6 "IS UNKNOWN" ;
+NoUnknOpExpr. OpExpr5 ::= OpExpr6 "IS NOT UNKNOWN" ;
+IsBtwnOpExpr. OpExpr4 ::= OpExpr5 "BETWEEN" OpExpr5 "AND" OpExpr5 ;
+NoBtwnOpExpr. OpExpr4 ::= OpExpr5 "NOT" "BETWEEN" OpExpr5 "AND" OpExpr5 ; -- TODO do smth
+IsEquaOpExpr. OpExpr3 ::= OpExpr4 "=" OpExpr4 ;
+NoEquaOpExpr. OpExpr3 ::= OpExpr4 "!=" OpExpr4 ;
+NoEquaOpExpr. OpExpr3 ::= OpExpr4 "<>" OpExpr4 ;
+GraterOpExpr. OpExpr3 ::= OpExpr4 ">" OpExpr4 ;
+GrOrEqOpExpr. OpExpr3 ::= OpExpr4 ">=" OpExpr4 ;
+SmalerOpExpr. OpExpr3 ::= OpExpr4 "<" OpExpr4 ;
+SmOrEqOpExpr. OpExpr3 ::= OpExpr4 "<=" OpExpr4 ; 
+IsLikeOpExpr. OpExpr3 ::= OpExpr4 "LIKE" OpExpr4 ;
+NoLikeOpExpr. OpExpr3 ::= OpExpr4 "NOT" "LIKE" OpExpr4 ;
+IsIn__OpExpr. OpExpr3 ::= OpExpr4 "IN" OpExpr4 ;
+NoIn__OpExpr. OpExpr3 ::= OpExpr4 "NOT" "IN" OpExpr4 ;
 
-coercions OpExp 12 ;
+NegatiOpExp. OpExpr2 ::= "NOT" OpExpr3 ;
+ConiunOpExp. OpExpr1 ::= OpExpr1 "AND" OpExpr2 ;
+AlternOpExp. OpExpr ::= OpExpr "OR" OpExpr1 ;
+
+coercions OpExpr 13 ;
+
+PrimaPathExp. PathExpr ::= PrimaryExpr ;
+FieldPathExp. PathExpr ::= PathExpr "." Ident ;
+INullPathExp. PathExpr ::= PathExpr "[" "?" "]" ;
+IExprPathExp. PathExpr ::= PathExpr "[" Expression "]" ;
+
+PriamryExpr. PrimaryExpr ::= "PrimaryXD" ;
+
+{-                       CASE EXPRESSIONS                        -}
+
+SimpleCaseExpr. CaseExpr ::= "CASE" Expression CaseExprTail ;
+SearchCaseExpr. CaseExpr ::= "CASE" CaseExprTail ;
+
+NoElseCaseTail. CaseExprTail ::= [CaseExprBind] "END" ;
+IsElseCaseTail. CaseExprTail ::= [CaseExprBind] "ELSE" Expression "END" ;
+
+separator nonempty CaseExprBind "" ;
+CaseExprBind. CaseExprBind ::= "WHEN" Expression "THEN" Expression ;
+
+
+{-                    Quantified Expressions                      
+IsEndQuantExpr. QuantExpr1 ::=
+	ExprQualifier Variable "IN" Expression [QuantVariable]
+		"SATISFIES" Expression ;
+NoEndQuantExpr. QuantExpr ::= QuantExpr1 ;
+
+( "," Variable "in" Expression )*
+
+SomeExprQual.  ExprQualifier ::= "SOME" ;
+SomeExprQual.  ExprQualifier ::= "ANY" ; -- TODO check if ANY and SOME are the same
+EveryExprQuar. ExprQualifier ::= "EVERY" ;
+
+EverQuantExpr. QuantExpr
+
+QuatnExprTail
+-}
