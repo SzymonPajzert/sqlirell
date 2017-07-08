@@ -1,30 +1,43 @@
 --- based on https://ci.apache.org/projects/asterixdb/sqlpp/manual.html
 -- TODO make all expressions finish with Expr
+-- TODO make all keywords case insensitive (probably)
 
-OpExpCons. Expression ::= OpExpr ;
-CaseExp. Expression ::= CaseExpr ;
---- QuanExp. Expression ::= QuantifiedExpression ;
+terminator nonempty Query ";" ;
+Prog. Program ::= [Query] ;
 
+token Identifier (letter (letter | digit | '_')*) ;
+
+ExpQuer. Query ::= Expression ;
+SelQuer. Query ::= SelectStatement ;
+
+separator Expression ","                                        ;
+OperExpr. Expression ::= OpExpr                                 ;
+CaseExpr. Expression ::= CaseExpr                               ;
+QuanExpr. Expression ::= QuantExpr                              ;
 
 -- operator expression
 PathOpExpr.   OpExpr13 ::= PathExpr ;
-ExistsOpExpr. OpExpr12 ::= "EXISTS" OpExpr13 ;
-NoExisOpExpr. OpExpr11 ::= "NOT EXISTS" OpExpr12 ; -- TODO insert whitespaces 
+ExistsOpExpr. OpExpr12 ::= "exists" OpExpr13 ;
+-- TODO check if not needed
+-- NoExisOpExpr. OpExpr11 ::= "not" "exists" OpExpr12 ; -- TODO insert whitespaces 
 ExponeOpExpr. OpExpr11 ::= OpExpr11 "^" OpExpr12 ; -- TODO check associativity
 MultipOpExpr. OpExpr10 ::= OpExpr10 "*" OpExpr11 ;
 DivisiOpExpr. OpExpr10 ::= OpExpr10 "/" OpExpr11 ;
 ModuloOpExpr. OpExpr10 ::= OpExpr10 "%" OpExpr11 ;
 AdditiOpExpr. OpExpr9 ::= OpExpr9 "+" OpExpr10 ;
 SubstrOpExpr. OpExpr9 ::= OpExpr9 "-" OpExpr10 ;
+-- TODO NegationExpr. OpExpr9 ::= "-" OpExpr10 ;
+-- TODO PositiveExpr. OpExpr9 ::= "+" OpExpr10 ;
+
+YIs. Is ::= "is" ;
+NIs. Is ::= "is" "not" ;
+
 ConcatOpExpr. OpExpr8 ::= OpExpr8 "||" OpExpr9 ;
-IsNullOpExpr. OpExpr6 ::= OpExpr7 "IS" "NULL" OpExpr7 ;
-NoNullOpExpr. OpExpr6 ::= OpExpr7 "IS" "NOT" "NULL" OpExpr7 ;
-IsMissOpExpr. OpExpr6 ::= OpExpr7 "IS" "MISSING" OpExpr7 ;
-NoMissOpExpr. OpExpr6 ::= OpExpr7 "IS NOT" "MISSING" OpExpr7 ;
-IsUnknOpExpr. OpExpr5 ::= OpExpr6 "IS UNKNOWN" ;
-NoUnknOpExpr. OpExpr5 ::= OpExpr6 "IS NOT UNKNOWN" ;
-IsBtwnOpExpr. OpExpr4 ::= OpExpr5 "BETWEEN" OpExpr5 "AND" OpExpr5 ;
-NoBtwnOpExpr. OpExpr4 ::= OpExpr5 "NOT" "BETWEEN" OpExpr5 "AND" OpExpr5 ; -- TODO do smth
+IsNullOpExpr. OpExpr6 ::= OpExpr6 Is "null" OpExpr7 ;
+IsMissOpExpr. OpExpr6 ::= OpExpr6 Is "missing" OpExpr7 ;
+IsUnknOpExpr. OpExpr5 ::= OpExpr6 Is "unknown" ;
+IsBtwnOpExpr. OpExpr4 ::= OpExpr5 "between" OpExpr5 "and" OpExpr5 ;
+NoBtwnOpExpr. OpExpr4 ::= OpExpr5 "not between" OpExpr5 "and" OpExpr5 ; -- TODO do smth
 IsEquaOpExpr. OpExpr3 ::= OpExpr4 "=" OpExpr4 ;
 NoEquaOpExpr. OpExpr3 ::= OpExpr4 "!=" OpExpr4 ;
 NoEquaOpExpr. OpExpr3 ::= OpExpr4 "<>" OpExpr4 ;
@@ -32,49 +45,229 @@ GraterOpExpr. OpExpr3 ::= OpExpr4 ">" OpExpr4 ;
 GrOrEqOpExpr. OpExpr3 ::= OpExpr4 ">=" OpExpr4 ;
 SmalerOpExpr. OpExpr3 ::= OpExpr4 "<" OpExpr4 ;
 SmOrEqOpExpr. OpExpr3 ::= OpExpr4 "<=" OpExpr4 ; 
-IsLikeOpExpr. OpExpr3 ::= OpExpr4 "LIKE" OpExpr4 ;
-NoLikeOpExpr. OpExpr3 ::= OpExpr4 "NOT" "LIKE" OpExpr4 ;
-IsIn__OpExpr. OpExpr3 ::= OpExpr4 "IN" OpExpr4 ;
-NoIn__OpExpr. OpExpr3 ::= OpExpr4 "NOT" "IN" OpExpr4 ;
+IsLikeOpExpr. OpExpr3 ::= OpExpr4 "like" OpExpr4 ;
+NoLikeOpExpr. OpExpr3 ::= OpExpr4 "not like" OpExpr4 ;
+IsIn__OpExpr. OpExpr3 ::= OpExpr4 "in" OpExpr4 ;
+NoIn__OpExpr. OpExpr3 ::= OpExpr4 "not in" OpExpr4 ;
 
-NegatiOpExp. OpExpr2 ::= "NOT" OpExpr3 ;
-ConiunOpExp. OpExpr1 ::= OpExpr1 "AND" OpExpr2 ;
-AlternOpExp. OpExpr ::= OpExpr "OR" OpExpr1 ;
+-- TODO NegatiOpExp. OpExpr2 ::= "not" OpExpr3 ;
+ConiunOpExp. OpExpr1 ::= OpExpr1 "and" OpExpr2 ;
+AlternOpExp. OpExpr ::= OpExpr "or" OpExpr1 ;
 
 coercions OpExpr 13 ;
 
 PrimaPathExp. PathExpr ::= PrimaryExpr ;
-FieldPathExp. PathExpr ::= PathExpr "." Ident ;
+FieldPathExp. PathExpr ::= PathExpr "." VariableRef ;
 INullPathExp. PathExpr ::= PathExpr "[" "?" "]" ;
 IExprPathExp. PathExpr ::= PathExpr "[" Expression "]" ;
 
-PriamryExpr. PrimaryExpr ::= "PrimaryXD" ;
-
 {-                       CASE EXPRESSIONS                        -}
 
-SimpleCaseExpr. CaseExpr ::= "CASE" Expression CaseExprTail ;
-SearchCaseExpr. CaseExpr ::= "CASE" CaseExprTail ;
+SimpleCaseExpr. CaseExpr ::= "case" Expression CaseExprTail ;
+SearchCaseExpr. CaseExpr ::= "case" CaseExprTail ;
 
-NoElseCaseTail. CaseExprTail ::= [CaseExprBind] "END" ;
-IsElseCaseTail. CaseExprTail ::= [CaseExprBind] "ELSE" Expression "END" ;
+NoElseCaseTail. CaseExprTail ::= [CaseExprBind] "end" ;
+IsElseCaseTail. CaseExprTail ::= [CaseExprBind] "else" Expression "end" ;
 
 separator nonempty CaseExprBind "" ;
-CaseExprBind. CaseExprBind ::= "WHEN" Expression "THEN" Expression ;
+CaseExprBind. CaseExprBind ::= "when" Expression "then" Expression ;
 
 
-{-                    Quantified Expressions                      
-IsEndQuantExpr. QuantExpr1 ::=
-	ExprQualifier Variable "IN" Expression [QuantVariable]
-		"SATISFIES" Expression ;
-NoEndQuantExpr. QuantExpr ::= QuantExpr1 ;
+{-                    Quantified Expressions                     -}
+IsEndQuantExpr. QuantExpr ::= QuantExprHelp "end";
+NoEndQuentExpr. QuaneExpr ::= QuantExprHelp ;
 
-( "," Variable "in" Expression )*
+-- IsMEnd. MEnd ::= "end" ;
+-- TODO NoMEnd. MEnd ::= ;
 
-SomeExprQual.  ExprQualifier ::= "SOME" ;
-SomeExprQual.  ExprQualifier ::= "ANY" ; -- TODO check if ANY and SOME are the same
-EveryExprQuar. ExprQualifier ::= "EVERY" ;
+separator nonempty QuantVariable "," ; 
+QuantExprHelp. QuantExprHelp ::= ExprQualifier [QuantVariable] "satisfies" Expression ;
 
-EverQuantExpr. QuantExpr
+QuantVariable. QuantVariable ::= VariableRef "in" Expression ;
 
-QuatnExprTail
--}
+SomeExprQual.  ExprQualifier ::= "some" ;
+SomeExprQual.  ExprQualifier ::= "anu" ; -- TODO check if ANY and SOME are the same
+EveryExprQuar. ExprQualifier ::= "every" ;
+
+
+
+{-                     Primary Expressions                       -}
+LiteralPrimaryExpr. PrimaryExpr  ::= Literal                      ;
+VariablPrimaryExpr. PrimaryExpr  ::= VariableRef                  ; 
+-- ParenthPrimaryExpr. PrimaryExpr1 ::= "(" Expression ")"           ;
+SubquerPrimaryExpr. PrimaryExpr1 ::= SelectStatement1             ;
+FunCallPrimaryExpr. PrimaryExpr  ::= Identifier "(" [ Expression ] ")" ;
+ConstruPrimaryExpr. PrimaryExpr  ::= Constructor                  ;
+
+_. PrimaryExpr ::= PrimaryExpr1;
+
+{-                     .  Literal                                -} 
+StringLiteral.  Literal ::= StringLiteral ;
+IntegeLiteral.  Literal ::= IntegerLiteral ;
+-- FloatiLiteral.  Literal ::= FloatLiteral ;
+-- DoubleLiteral.  Literal ::= DoubleLiteral ;
+NullLiteral.    Literal ::= "null" ;
+MissingLiteral. Literal ::= "missing" ;
+TrueLiteral.    Literal ::= "true" ;
+FalseLiteral.   Literal ::= "false" ;
+
+-- TODO add escaping options
+DoubleQuoteString. StringLiteral ::= "\"" Identifier "\"" ;
+SingleQuoteString. StringLiteral ::= "\'" Identifier "\'" ;
+
+IntegerLiteral. IntegerLiteral ::= Integer ; 
+
+-- TODO: FloatLiteral DoubleLiteral
+
+{-                     .  Constructor                            -}
+ArrayConstr. Constructor       ::= "[" [ Expression ] "]"  	      ;
+MultisetConst. Constructor     ::= "{{" [ Expression ]"}}"        ;
+
+separator FieldBinding "," 	   	   		  			 			  ;
+ObjectConstr. Constructor      ::= "{" [ FieldBinding ] "}"       ;
+FieldBinding. FieldBinding ::= Expression ":" Expression		  ;
+
+
+{-  . SelectStatement                                            -}
+-- TODO find more effective way to do maybes
+SelectStmt. SelectStatement ::=
+	MWithClause
+   	SelSetOper
+	MOrderbyClause
+	MLimitClause                                                  ;
+
+separator UnionedSets ""                                            ;  
+SelSetOper. SelSetOper ::= SelectBlock [UnionedSets]                ;
+SelBlockUnionedSets. UnionedSets ::= "union" "all" SelectBlock      ;
+SubqueryUnionedSets. UnionedSets ::= "union" "all" SelectStatement1 ;
+
+_. SelectStatement1           ::= "(" SelectStatement ")"         ;
+
+FirstSelBlock. SelectBlock ::= SelClause MFromLet MWhere MGroupLetHaving ;
+SeconSelBlock. SelectBlock ::= FromClause MLetClause MWhere MGroupLetHaving SelClause ;
+
+IsMFromLet. MFromLet ::= FromClause MLetClause ;
+NoMFromLet. MFromLet ::=                       ;
+
+IsMWhere. MWhere ::= WhereClause ;
+NoMWhere. MWhere ::=             ;
+
+IsMGroupLetHaving. MGroupLetHaving ::= GroupbyClause MLetClause MHavingClause ;
+NoMGroupLetHaving. MGroupLetHaving ::=                                        ;
+
+IsMLetClause. MLetClause ::= LetClause ;
+NoMLetClause. MLetClause ::=            ;
+
+SelClause. SelClause ::= "select" MTypeSelClause SelRegOrVal ;
+
+RegSelRegOrVal. SelRegOrVal ::= SelReg ;
+ValSelRegOrVal. SelRegOrVal ::= SelVal ;
+
+AllMTypeSelClause. MTypeSelClause ::= "all"      ;
+DisMTypeSelClause. MTypeSelClause ::= "distinct" ;
+NonMTypeSelClause. MTypeSelClause ::=            ;
+
+separator nonempty Projection "," ;
+SelReg. SelReg ::= [Projection]   ;
+
+ValueSelValType. SelValType ::= "value"		;
+ElemtSelValType. SelValType ::= "element" 	;
+Raw__SelValType. SelValType ::= "raw" 		;
+
+SelVal. SelVal        ::= SelValType Expression				;
+AllProjection. Projection ::= "*"							;
+ExpProjection. Projection ::= Expression MAs Identifier ;
+
+NoMAs. MAs ::=  	  ;
+IsMAs. MAs ::= "as"   ;
+
+separator nonempty FromTerm "," ; 
+FromClause. FromClause ::= "from" [FromTerm] ;
+
+separator FromTermJoin "" ;
+FromTerm. FromTerm         ::= ExprMVar [FromTermJoin] ;
+FromTermJoin. FromTermJoin ::= MJoinType JoinOrUnnest  ;
+JoinJoinOrUnnest. JoinOrUnnest ::= JoinClause      ;
+UnnrJoinOrUnnest. JoinOrUnnest ::= UnnestClause    ;
+
+ExprMVar. ExprMVar ::= Expression MMAsVar ;
+NoMMAsVar. MMAsVar ::=              ;
+IsMMAsVar. MMAsVar ::= MAs Variable ;
+
+JoinClause. JoinClause     ::= "join" ExprMVar "on" Expression ;
+UnnestClause. UnnestClause ::= UnnestCaluseType Expression MAs Variable MAtVar ;
+
+UnnestUnnestClauseType. UnnestCaluseType ::= "unnest"    ;
+CorrelUnnestClauseType. UnnestCaluseType ::= "correlate" ;
+FlatteUnnestClauseType. UnnestCaluseType ::= "flatten"   ;
+
+IsMAtVar. MAtVar ::= "at" Variable ;
+NoMAtVar. MAtVar ::=               ;
+
+IsMJoinType. MJoinType ::= JoinType ;
+NoMJoinType. MJoinType ::=          ;
+
+InnerJoinType. JoinType ::= "inner"        ;
+LeftNJoinType. JoinType ::= "left"         ;
+LeftIJoinType. JoinType ::= "left" "outer" ;
+
+separator nonempty WithElement "," ; 
+WithClause. WithClause ::= "with" [WithElement] ;
+
+IsMWithClause. MWithClause ::= WithClause ;
+NoMWithClause. MWithClause ::=            ;
+
+separator nonempty LetElement "," ;
+LetClause. LetClause ::= LetLetClause [LetElement]	;
+FirstLetLetClause. LetLetClause ::= "let"  		 	;
+SeconLetLetClause. LetLetClause ::= "letting" 	 	;
+
+LetElement.  LetElement  ::= Variable "=" Expression 	 ;
+WithElement. WithElement ::= Variable "as" Expression  ;
+
+WhereClause. WhereClause ::= "where" Expression ;
+
+separator nonempty ExprMVar "," ;
+GroupbyClause. GroupbyClause ::= "GROUP" "BY" [ExprMVar] MaybeGroupAs ;
+
+IsMaybeGroupAs. MaybeGroupAs ::= "group" "as" Variable MaybeVarAsRef ;
+
+separator nonempty VarAsRef "," ;
+IsMaybeVarAsRef. MaybeVarAsRef ::= "(" [VarAsRef] ")"  ;
+VarAsRef. VarAsRef ::= Variable "as" VariableRef ;
+
+NoMaybeVarAsRef. MaybeVarAsRef ::=                   ;
+
+HavingClause. HavingClause ::= "having" Expression ;
+IsMHavingClause. MHavingClause ::= HavingClause ;
+NoMHavingClause. MHavingClause ::=  			;
+
+
+IsMOrderbyClause. MOrderbyClause ::= OrderbyClause ;
+NoMOrderbyClause. MOrderbyClause ::=               ;
+
+separator nonempty ExprOrderbyClause "," ;
+OrderbyClause. OrderbyClause ::= "order" "by" [ExprOrderbyClause] ;
+ExprOrderByClause. ExprOrderbyClause ::= Expression MaybeOrdOrderbyClasuse ;
+
+AscOrdClause. MaybeOrdOrderbyClasuse ::= "asc"  ;
+DesOrdClause. MaybeOrdOrderbyClasuse ::= "desc" ;
+NonOrdClause. MaybeOrdOrderbyClasuse ::=        ;
+
+IsMLimitClause. MLimitClause ::= LimitClause ;
+NoMLimitClause. MLimitClause ::= 			 ;
+
+LimitClause. LimitClause ::= "limit" Expression MOffsetExpr ;
+
+IsMOffsetExpr. MOffsetExpr ::= "offset" Expression ;
+NoMOffsetExpr. MOffsetExpr ::=                     ;
+
+{-                     VariableRef                               -}
+VariableRef. VariableRef ::= Identifier ;
+QualifieRef. VariableRef ::= "`" Identifier "`" ;
+-- TODO add delimited idents
+
+Variable. Variable ::= Identifier ;   -- check whether thats ok
+
+comment "--" ;
+comment "/*" "*/" ;

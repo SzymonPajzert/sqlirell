@@ -1,8 +1,12 @@
-all:
+all: grammar parse-test
+
+parse-test: Test/Grammar.hs grammar
+	ghc --make Test/Grammar.hs -o parse-test
+
+grammar:
 	bnfc -d grammar.cf
 	happy -gca --info=Grammar/LRDoc.txt Grammar/Par.y
 	alex -g Grammar/Lex.x
-	ghc --make Grammar/Test.hs -o Grammar/Test
 
 clean:
 	-rm -f Grammar/*.log Grammar/*.aux Grammar/*.hi Grammar/*.o Grammar/*.dvi
