@@ -1,4 +1,4 @@
-module Grammar.Parse (parse, Err(..)) where
+module Compile.Parse (parse, Err(..)) where
 
 import Grammar.Par (pProgram, myLexer) 
 import Grammar.ErrM 

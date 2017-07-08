@@ -5,8 +5,8 @@ parse-test: Test/Grammar.hs grammar
 
 grammar:
 	bnfc -d grammar.cf
-	happy -gca --info=Grammar/LRDoc.txt Grammar/Par.y
-	alex -g Grammar/Lex.x
+	happy -gca$(GRAM_DEBUG) --info=Grammar/LRDoc.txt Grammar/Par.y
+	alex -g$(GRAM_DEBUG) Grammar/Lex.x
 
 clean:
 	-rm -f Grammar/*.log Grammar/*.aux Grammar/*.hi Grammar/*.o Grammar/*.dvi

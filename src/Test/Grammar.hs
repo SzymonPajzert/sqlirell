@@ -5,13 +5,15 @@ module Main where
 import Prelude hiding (log)
 import System.Console.ANSI
 import Control.Monad.Writer
+import System.Environment (getArgs)
+import System.Exit (exitSuccess, exitFailure)
 
-import Grammar.Parse (parse, Err(..))
+import Compile.Parse (parse, Err(..))
 
 type FileName = String
 
 parseableFiles :: [FileName]
-parseableFiles = []
+parseableFiles = "../example/parseable" `files` ["arithmetic.sql", "collection_op.sql"]
 
 log :: String -> Writer [String] ()
 log string = tell [string]
@@ -46,11 +48,55 @@ files path names = do
   name <- names
   return (path ++ "/" ++ name)
 
+usage :: IO ()
+usage = do
+  putStrLn $ unlines
+    [ "usage: Call with one of the following argument combinations:"
+    , "  -h --help          Display this help message."
+    , "  (no arguments)     Parse content of default files"
+    , "  -p (files)         Parse content of user given files"
+    ]
+  exitFailure
+
+-- TODO move to util
+infixr 5 |>>
+(|>>) :: Functor f => f a -> (a -> b) -> f b
+(|>>) a f = f `fmap` a
+
+infixr 5 |>
+(|>) :: a -> (a -> b) -> b
+(|>) a f = f a
+
+noComments :: [String] -> [String]
+noComments = filter pred
+  where
+    pred ('-':'-':_) = False
+    pred _           = True
+
 main :: IO ()
 main = do
-  results <- mapM testFile parseableFiles
-  let number = length $ filter not results
+  args <- getArgs
 
-  putStrLn ""
-  putStrLn $ (show number) ++ " tests failed"
+  putStrLn $ show args -- TODO remove
+
+  filesToTestMaybe <- case args of
+        [] -> return $ Just parseableFiles
+        ("-p":userFiles) -> return $ Just userFiles
+
+        -- TODO pipe like ocaml infix operator on monads
+        
+        ["-f", fileOfFiles] -> (readFile fileOfFiles) |>> lines |>> noComments |>> Just
+        [help] | help `elem` ["-h", "--help"] -> return Nothing
+        _                                     -> return Nothing
+
+  case filesToTestMaybe of
+    Nothing -> usage
+    Just filesToTest -> do
+        results <- mapM testFile filesToTest
+        let number = length $ filter id results
+        let allNumber = length $ results
+
+        putStrLn ""
+        putStrLn $ (show number) ++ "/" ++ (show allNumber) ++ " tests passed"
+        exitSuccess
 

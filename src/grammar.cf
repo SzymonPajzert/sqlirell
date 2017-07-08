@@ -2,10 +2,14 @@
 -- TODO make all expressions finish with Expr
 -- TODO make all keywords case insensitive (probably)
 
-terminator nonempty Query ";" ;
+terminator Query ";" ;
 Prog. Program ::= [Query] ;
 
-token Identifier (letter (letter | digit | '_')*) ;
+token Identifier (letter (letter | digit | '_' | '$' )*) ;
+token DelimIdent '`' (char - '`')* '`'  ;
+
+token DoubleString '"' (char - '"')* '"'    ;
+token SingleString '\'' (char - '\'')* '\'' ;
 
 ExpQuer. Query ::= Expression ;
 SelQuer. Query ::= SelectStatement ;
@@ -102,7 +106,8 @@ ConstruPrimaryExpr. PrimaryExpr  ::= Constructor                  ;
 _. PrimaryExpr ::= PrimaryExpr1;
 
 {-                     .  Literal                                -} 
-StringLiteral.  Literal ::= StringLiteral ;
+DStringLiteral.  Literal ::= DoubleString ;
+SStringLiteral.  Literal ::= SingleString ;
 IntegeLiteral.  Literal ::= IntegerLiteral ;
 -- FloatiLiteral.  Literal ::= FloatLiteral ;
 -- DoubleLiteral.  Literal ::= DoubleLiteral ;
@@ -228,7 +233,7 @@ WithElement. WithElement ::= Variable "as" Expression  ;
 WhereClause. WhereClause ::= "where" Expression ;
 
 separator nonempty ExprMVar "," ;
-GroupbyClause. GroupbyClause ::= "GROUP" "BY" [ExprMVar] MaybeGroupAs ;
+GroupbyClause. GroupbyClause ::= "group" "by" [ExprMVar] MaybeGroupAs ;
 
 IsMaybeGroupAs. MaybeGroupAs ::= "group" "as" Variable MaybeVarAsRef ;
 
@@ -264,8 +269,7 @@ NoMOffsetExpr. MOffsetExpr ::=                     ;
 
 {-                     VariableRef                               -}
 VariableRef. VariableRef ::= Identifier ;
-QualifieRef. VariableRef ::= "`" Identifier "`" ;
--- TODO add delimited idents
+QualifieRef. VariableRef ::= DelimIdent ;
 
 Variable. Variable ::= Identifier ;   -- check whether thats ok
 
