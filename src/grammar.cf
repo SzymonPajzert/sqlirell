@@ -8,10 +8,14 @@ Prog. Program ::= [Query] ;
 token Identifier (letter (letter | digit | '_' | '$' )*) ;
 token DelimIdent '`' (char - '`')* '`'  ;
 
-token DoubleString '"' (char - '"')* '"'    ;
-token SingleString '\'' (char - '\'')* '\'' ;
+token DoubleString '"' ((char - '"') | ('\\' '"') )* '"'    ;
+token SingleString '\'' ((char - '\'') | ('\\' '\'') )* '\'' ;
+
+token FloatNum (digit)* ('.' digit (digit)* )? ( 'f' | 'F' ) ;
+token DoubleNum (digit)* '.' digit (digit)* ;
 
 ExpQuer. Query ::= Expression ;
+
 SelQuer. Query ::= SelectStatement ;
 
 separator Expression ","                                        ;
@@ -22,27 +26,26 @@ QuanExpr. Expression ::= QuantExpr                              ;
 -- operator expression
 PathOpExpr.   OpExpr13 ::= PathExpr ;
 ExistsOpExpr. OpExpr12 ::= "exists" OpExpr13 ;
--- TODO check if not needed
--- NoExisOpExpr. OpExpr11 ::= "not" "exists" OpExpr12 ; -- TODO insert whitespaces 
-ExponeOpExpr. OpExpr11 ::= OpExpr11 "^" OpExpr12 ; -- TODO check associativity
+ExponeOpExpr. OpExpr11 ::= OpExpr12 "^" OpExpr11 ; -- TODO check associativity
 MultipOpExpr. OpExpr10 ::= OpExpr10 "*" OpExpr11 ;
 DivisiOpExpr. OpExpr10 ::= OpExpr10 "/" OpExpr11 ;
 ModuloOpExpr. OpExpr10 ::= OpExpr10 "%" OpExpr11 ;
 AdditiOpExpr. OpExpr9 ::= OpExpr9 "+" OpExpr10 ;
 SubstrOpExpr. OpExpr9 ::= OpExpr9 "-" OpExpr10 ;
--- TODO NegationExpr. OpExpr9 ::= "-" OpExpr10 ;
+NegationExpr. OpExpr8 ::= "-" OpExpr10 ;
 -- TODO PositiveExpr. OpExpr9 ::= "+" OpExpr10 ;
 
 YIs. Is ::= "is" ;
 NIs. Is ::= "is" "not" ;
 
 ConcatOpExpr. OpExpr8 ::= OpExpr8 "||" OpExpr9 ;
-IsNullOpExpr. OpExpr6 ::= OpExpr6 Is "null" OpExpr7 ;
-IsMissOpExpr. OpExpr6 ::= OpExpr6 Is "missing" OpExpr7 ;
-IsUnknOpExpr. OpExpr5 ::= OpExpr6 Is "unknown" ;
+IsNullOpExpr. OpExpr6 ::= OpExpr7 Is "null"    ;
+IsMissOpExpr. OpExpr6 ::= OpExpr7 Is "missing" ;
+IsUnknOpExpr. OpExpr5 ::= OpExpr7 Is "unknown" ;
 IsBtwnOpExpr. OpExpr4 ::= OpExpr5 "between" OpExpr5 "and" OpExpr5 ;
 NoBtwnOpExpr. OpExpr4 ::= OpExpr5 "not between" OpExpr5 "and" OpExpr5 ; -- TODO do smth
 IsEquaOpExpr. OpExpr3 ::= OpExpr4 "=" OpExpr4 ;
+NoEquaOpExpr. OpExpr3 ::= OpExpr4 "~=" OpExpr4 ;
 NoEquaOpExpr. OpExpr3 ::= OpExpr4 "!=" OpExpr4 ;
 NoEquaOpExpr. OpExpr3 ::= OpExpr4 "<>" OpExpr4 ;
 GraterOpExpr. OpExpr3 ::= OpExpr4 ">" OpExpr4 ;
@@ -50,11 +53,11 @@ GrOrEqOpExpr. OpExpr3 ::= OpExpr4 ">=" OpExpr4 ;
 SmalerOpExpr. OpExpr3 ::= OpExpr4 "<" OpExpr4 ;
 SmOrEqOpExpr. OpExpr3 ::= OpExpr4 "<=" OpExpr4 ; 
 IsLikeOpExpr. OpExpr3 ::= OpExpr4 "like" OpExpr4 ;
-NoLikeOpExpr. OpExpr3 ::= OpExpr4 "not like" OpExpr4 ;
+NoLikeOpExpr. OpExpr3 ::= OpExpr4 "not" "like" OpExpr4 ;
 IsIn__OpExpr. OpExpr3 ::= OpExpr4 "in" OpExpr4 ;
-NoIn__OpExpr. OpExpr3 ::= OpExpr4 "not in" OpExpr4 ;
+NoIn__OpExpr. OpExpr3 ::= OpExpr4 "not" "in" OpExpr4 ;
 
--- TODO NegatiOpExp. OpExpr2 ::= "not" OpExpr3 ;
+NegatiOpExp. OpExpr2 ::= "not" OpExpr3 ;
 ConiunOpExp. OpExpr1 ::= OpExpr1 "and" OpExpr2 ;
 AlternOpExp. OpExpr ::= OpExpr "or" OpExpr1 ;
 
@@ -96,21 +99,21 @@ EveryExprQuar. ExprQualifier ::= "every" ;
 
 
 {-                     Primary Expressions                       -}
-LiteralPrimaryExpr. PrimaryExpr  ::= Literal                      ;
-VariablPrimaryExpr. PrimaryExpr  ::= VariableRef                  ; 
--- ParenthPrimaryExpr. PrimaryExpr1 ::= "(" Expression ")"           ;
-SubquerPrimaryExpr. PrimaryExpr1 ::= SelectStatement1             ;
-FunCallPrimaryExpr. PrimaryExpr  ::= Identifier "(" [ Expression ] ")" ;
-ConstruPrimaryExpr. PrimaryExpr  ::= Constructor                  ;
+LiteralPrimaryExpr. PrimaryExpr1  ::= Literal                      ;
+VariablPrimaryExpr. PrimaryExpr1  ::= VariableRef                  ; 
+SubquerPrimaryExpr. PrimaryExpr2  ::= SelectStatement1             ;
+FunCallPrimaryExpr. PrimaryExpr   ::= PathExpr "(" [ Expression ] ")" ;
+ConstruPrimaryExpr. PrimaryExpr1  ::= Constructor                  ;
 
-_. PrimaryExpr ::= PrimaryExpr1;
+_. PrimaryExpr  ::= PrimaryExpr1;
+_. PrimaryExpr1 ::= PrimaryExpr2;
 
 {-                     .  Literal                                -} 
 DStringLiteral.  Literal ::= DoubleString ;
 SStringLiteral.  Literal ::= SingleString ;
-IntegeLiteral.  Literal ::= IntegerLiteral ;
--- FloatiLiteral.  Literal ::= FloatLiteral ;
--- DoubleLiteral.  Literal ::= DoubleLiteral ;
+IntegeLiteral.  Literal ::= Integer ;
+FloatiLiteral.  Literal ::= FloatNum ;
+DoubleLiteral.  Literal ::= DoubleNum ;
 NullLiteral.    Literal ::= "null" ;
 MissingLiteral. Literal ::= "missing" ;
 TrueLiteral.    Literal ::= "true" ;
@@ -148,20 +151,21 @@ SubqueryUnionedSets. UnionedSets ::= "union" "all" SelectStatement1 ;
 
 _. SelectStatement1           ::= "(" SelectStatement ")"         ;
 
-FirstSelBlock. SelectBlock ::= SelClause MFromLet MWhere MGroupLetHaving ;
-SeconSelBlock. SelectBlock ::= FromClause MLetClause MWhere MGroupLetHaving SelClause ;
+FirstSelBlock. SelectBlock ::= SelClause MFromDefVal MWhere MGroupDefValHaving ;
+SeconSelBlock. SelectBlock ::= FromClause MDefValClause MWhere MGroupDefValHaving SelClause ;
 
-IsMFromLet. MFromLet ::= FromClause MLetClause ;
-NoMFromLet. MFromLet ::=                       ;
+IsMFromDefVal. MFromDefVal ::= FromClause MDefValClause ;
+NoMFromDefVal. MFromDefVal ::=                          ;
 
 IsMWhere. MWhere ::= WhereClause ;
 NoMWhere. MWhere ::=             ;
 
-IsMGroupLetHaving. MGroupLetHaving ::= GroupbyClause MLetClause MHavingClause ;
-NoMGroupLetHaving. MGroupLetHaving ::=                                        ;
+IsMGroupDefValHaving. MGroupDefValHaving ::= GroupbyClause MDefValClause MHavingClause ;
+NoMGroupDefValHaving. MGroupDefValHaving ::=                                           ;
 
-IsMLetClause. MLetClause ::= LetClause ;
-NoMLetClause. MLetClause ::=            ;
+LetMDefValClause. MDefValClause ::= LetClause  ;
+WitMDefValClause. MDefValClause ::= WithClause ;
+NonMDefValClause. MDefValClause ::=            ;
 
 SelClause. SelClause ::= "select" MTypeSelClause SelRegOrVal ;
 
@@ -181,10 +185,13 @@ Raw__SelValType. SelValType ::= "raw" 		;
 
 SelVal. SelVal        ::= SelValType Expression				;
 AllProjection. Projection ::= "*"							;
-ExpProjection. Projection ::= Expression MAs Identifier ;
+ExpProjection. Projection ::= Expression MAsIdentifier ;
 
-NoMAs. MAs ::=  	  ;
-IsMAs. MAs ::= "as"   ;
+NoMAsIdent. MAsIdentifier ::=  	             ;
+IsMAsIdent. MAsIdentifier ::= MAs Identifier ;
+
+NoMAs. MAs ::=      ;
+IsMAs. MAs ::= "as" ;
 
 separator nonempty FromTerm "," ; 
 FromClause. FromClause ::= "from" [FromTerm] ;
@@ -273,5 +280,7 @@ QualifieRef. VariableRef ::= DelimIdent ;
 
 Variable. Variable ::= Identifier ;   -- check whether thats ok
 
+comment "//" ;
+comment "#"  ;
 comment "--" ;
 comment "/*" "*/" ;

@@ -2,13 +2,17 @@
 
 module Main where
 
-import Prelude hiding (log)
+import Prelude hiding (log, all)
 import System.Console.ANSI
 import Control.Monad.Writer
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 
-import Compile.Parse (parse, Err(..))
+import Text.Printf
+
+import Compile.Parse (parseComm, Err(..))
+
+import Util ((|>), (|>>))
 
 type FileName = String
 
@@ -18,54 +22,40 @@ parseableFiles = "../example/parseable" `files` ["arithmetic.sql", "collection_o
 log :: String -> Writer [String] ()
 log string = tell [string]
 
-helpTestFile :: String -> Writer [String] Bool
+helpTestFile :: String -> [Writer [String] Bool]
 helpTestFile fileCont =
-  case parse fileCont of
+  (flip map) (parseComm fileCont) (\parsed -> case parsed of
      Bad err -> do
        log "Compilation error:"
        log $ show err
        return False
-     Ok _ -> do
-       log "Ok"
-       return True
-       
-testFile :: String -> IO Bool
+     Ok _ -> return True)
+
+type Result = (Int, Int)
+
+testFile :: String -> IO Result
 testFile file = do
   fileCont <- readFile file
-  let (result, logs) = runWriter $ helpTestFile fileCont
+  let tests = (helpTestFile fileCont) `zip` ([1..] :: [Int])
 
-  let color = if result then Green else Red
-  setSGR [SetColor Foreground Vivid color]
-  putStrLn $ "[" ++ file ++ "]"
-  setSGR [Reset]
+  results <- (flip mapM) tests (\(test, iden) -> do
+     let (result, logs) = runWriter test
 
-  mapM_ putStrLn logs
+     let color = if result then Green else Red
+     setSGR [SetColor Foreground Vivid color]
+     putStrLn $ "[" ++ file ++ "][" ++ (show iden) ++ "]"
+     setSGR [Reset]
 
-  return result
+     mapM_ putStrLn logs
+
+     return result)
+
+  return (length (filter id results), length results)
 
 files :: FilePath -> [FileName] -> [FilePath]
 files path names = do
   name <- names
   return (path ++ "/" ++ name)
-
-usage :: IO ()
-usage = do
-  putStrLn $ unlines
-    [ "usage: Call with one of the following argument combinations:"
-    , "  -h --help          Display this help message."
-    , "  (no arguments)     Parse content of default files"
-    , "  -p (files)         Parse content of user given files"
-    ]
-  exitFailure
-
--- TODO move to util
-infixr 5 |>>
-(|>>) :: Functor f => f a -> (a -> b) -> f b
-(|>>) a f = f `fmap` a
-
-infixr 5 |>
-(|>) :: a -> (a -> b) -> b
-(|>) a f = f a
 
 noComments :: [String] -> [String]
 noComments = filter pred
@@ -73,6 +63,10 @@ noComments = filter pred
     pred ('-':'-':_) = False
     pred _           = True
 
+percentage :: Result -> String
+percentage (goodN, allN) = "[" ++
+  printf "%.2f" ((fromIntegral (100 * goodN) / (fromIntegral allN)) :: Double)
+  ++ "%]"
 main :: IO ()
 main = do
   args <- getArgs
@@ -83,8 +77,6 @@ main = do
         [] -> return $ Just parseableFiles
         ("-p":userFiles) -> return $ Just userFiles
 
-        -- TODO pipe like ocaml infix operator on monads
-        
         ["-f", fileOfFiles] -> (readFile fileOfFiles) |>> lines |>> noComments |>> Just
         [help] | help `elem` ["-h", "--help"] -> return Nothing
         _                                     -> return Nothing
@@ -93,10 +85,22 @@ main = do
     Nothing -> usage
     Just filesToTest -> do
         results <- mapM testFile filesToTest
-        let number = length $ filter id results
-        let allNumber = length $ results
+
+        let (good, all) = unzip results
+        let goodNumber = sum good
+        let allNumber  = sum all
 
         putStrLn ""
-        putStrLn $ (show number) ++ "/" ++ (show allNumber) ++ " tests passed"
+        putStrLn $ (show goodNumber) ++ "/" ++ (show allNumber) ++ " " ++ (percentage (goodNumber, allNumber)) ++ " tests passed"
         exitSuccess
 
+
+usage :: IO ()
+usage = do
+  putStrLn $ unlines
+    [ "usage: Call with one of the following argument combinations:"
+    , "  -h --help          Display this help message."
+    , "  (no arguments)     Parse content of default files"
+    , "  -p (files)         Parse content of user given files"
+    ]
+  exitFailure
