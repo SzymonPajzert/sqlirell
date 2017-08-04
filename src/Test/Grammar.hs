@@ -7,6 +7,8 @@ import System.Console.ANSI
 import Control.Monad.Writer
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
+import Options.Applicative
+import Control.Applicative ((<|>), many)
 
 import Text.Printf
 
@@ -67,32 +69,58 @@ percentage :: Result -> String
 percentage (goodN, allN) = "[" ++
   printf "%.2f" ((fromIntegral (100 * goodN) / (fromIntegral allN)) :: Double)
   ++ "%]"
+
+
+data DataSource
+  = Many [FileName]
+  | One FileName
+
+data CommandOptions = CommandOptions
+  { dataSource :: DataSource
+  , onlyError  :: Bool
+  }
+
+
+dataSourceParser :: Parser DataSource
+dataSourceParser =
+  userFilesParser <|>
+  manyFilesParser <|>
+  (fmap Many $ pure parseableFiles)
+  where
+    userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
+    manyFilesParser = option (fmap Many $ many str) (short 'f' <> metavar "MANYFILES")
+
+onlyErrorParser :: Parser Bool
+onlyErrorParser = flag False True (short 'e')
+
+parseOptions :: IO CommandOptions
+parseOptions = execParser $ info (helper <*> commandOptsParser) commandOptsInfo
+  where
+    commandOptsParser = CommandOptions <$> dataSourceParser <*> onlyErrorParser
+    commandOptsInfo = fullDesc <> progDesc "SQLirell tester"
+
 main :: IO ()
 main = do
   args <- getArgs
 
   putStrLn $ show args -- TODO remove
 
-  filesToTestMaybe <- case args of
-        [] -> return $ Just parseableFiles
-        ("-p":userFiles) -> return $ Just userFiles
+  options <- parseOptions
 
-        ["-f", fileOfFiles] -> (readFile fileOfFiles) |>> lines |>> noComments |>> Just
-        [help] | help `elem` ["-h", "--help"] -> return Nothing
-        _                                     -> return Nothing
+  filesToTest <- case dataSource options of
+    Many files -> return files
+    One fileOfFiles -> (readFile fileOfFiles) |>> lines |>> noComments
 
-  case filesToTestMaybe of
-    Nothing -> usage
-    Just filesToTest -> do
-        results <- mapM testFile filesToTest
+  results <- mapM testFile filesToTest
 
-        let (good, all) = unzip results
-        let goodNumber = sum good
-        let allNumber  = sum all
+  let (good, all) = unzip results
+  let goodNumber = sum good
+  let allNumber  = sum all
 
-        putStrLn ""
-        putStrLn $ (show goodNumber) ++ "/" ++ (show allNumber) ++ " " ++ (percentage (goodNumber, allNumber)) ++ " tests passed"
-        exitSuccess
+  putStrLn ""
+  putStrLn $ (show goodNumber) ++ "/" ++ (show allNumber) ++ " " ++ (percentage (goodNumber, allNumber)) ++ " tests passed"
+
+  exitSuccess
 
 
 usage :: IO ()
