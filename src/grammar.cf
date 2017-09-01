@@ -38,12 +38,16 @@ PositiveExpr. OpExpr9 ::= "+" OpExpr11 ;
 YIs. Is ::= "is" ;
 NIs. Is ::= "is" "not" ;
 
+BtwnAfterNot. AfterNot ::= "between" OpExpr6 "and" OpExpr6 ;
+LikeAfterNot. AfterNot ::= "like" OpExpr4 ;
+IsInAfterNot. AfterNot ::= "in" OpExpr4 ; 
+
 ConcatOpExpr. OpExpr9 ::= OpExpr9 "||" OpExpr10 ;
 IsNullOpExpr. OpExpr7 ::= OpExpr8 Is "null"    ;
 IsMissOpExpr. OpExpr7 ::= OpExpr8 Is "missing" ;
 IsUnknOpExpr. OpExpr6 ::= OpExpr8 Is "unknown" ;
 IsBtwnOpExpr. OpExpr5 ::= OpExpr6 "between" OpExpr6 "and" OpExpr6 ;
-NoBtwnOpExpr. OpExpr5 ::= OpExpr6 "not" "between" OpExpr6 "and" OpExpr6 ;
+NoAfteOpExpr. OpExpr5 ::= OpExpr6 "not" AfterNot;
 
 IsEquaOpExpr. OpExpr4 ::= OpExpr5 "=" OpExpr5 ;
 NoEquaOpExpr. OpExpr4 ::= OpExpr5 "~=" OpExpr5 ;
@@ -54,9 +58,7 @@ GrOrEqOpExpr. OpExpr4 ::= OpExpr5 ">=" OpExpr5 ;
 SmalerOpExpr. OpExpr4 ::= OpExpr5 "<" OpExpr5 ;
 SmOrEqOpExpr. OpExpr4 ::= OpExpr5 "<=" OpExpr5 ;
 IsLikeOpExpr. OpExpr3 ::= OpExpr4 "like" OpExpr4 ;
-NoLikeOpExpr. OpExpr3 ::= OpExpr4 "not" "like" OpExpr4 ;
 IsIn__OpExpr. OpExpr3 ::= OpExpr4 "in" OpExpr4 ;
-NoIn__OpExpr. OpExpr3 ::= OpExpr4 "not" "in" OpExpr4 ;
 
 NegatiOpExp. OpExpr2 ::= "not" OpExpr3 ;
 ConiunOpExp. OpExpr1 ::= OpExpr1 "and" OpExpr2 ;
@@ -198,21 +200,18 @@ separator nonempty FromTerm "," ;
 FromClause. FromClause ::= "from" [FromTerm] ;
 
 separator FromTermJoin "" ;
-FromTerm. FromTerm         ::= ExprMVar [FromTermJoin] ;
+FromTerm. FromTerm         ::= ExprMVarMAt [FromTermJoin] ;
 FromTermJoin. FromTermJoin ::= MJoinType JoinOrUnnest  ;
-JoinJoinOrUnnest. JoinOrUnnest ::= JoinClause      ;
-UnnrJoinOrUnnest. JoinOrUnnest ::= UnnestClause    ;
+JoinJoinOrUnnest. JoinOrUnnest ::= "join" ExprMVarMAt "on" Expression ;
+UnnrJoinOrUnnest. JoinOrUnnest ::= UnnestClauseType Expression MAs Variable MAtVar ;
 
-ExprMVar. ExprMVar ::= Expression MMAsVar ;
+ExprMVar. ExprMVarMAt ::= Expression MMAsVar MAtVar ;
 NoMMAsVar. MMAsVar ::=              ;
 IsMMAsVar. MMAsVar ::= MAs Variable ;
 
-JoinClause. JoinClause     ::= "join" ExprMVar "on" Expression ;
-UnnestClause. UnnestClause ::= UnnestCaluseType Expression MAs Variable MAtVar ;
-
-UnnestUnnestClauseType. UnnestCaluseType ::= "unnest"    ;
-CorrelUnnestClauseType. UnnestCaluseType ::= "correlate" ;
-FlatteUnnestClauseType. UnnestCaluseType ::= "flatten"   ;
+UnnestUnnestClauseType. UnnestClauseType ::= "unnest"    ;
+CorrelUnnestClauseType. UnnestClauseType ::= "correlate" ;
+FlatteUnnestClauseType. UnnestClauseType ::= "flatten"   ;
 
 IsMAtVar. MAtVar ::= "at" Variable ;
 NoMAtVar. MAtVar ::=               ;
@@ -240,8 +239,8 @@ WithElement. WithElement ::= Variable "as" Expression  ;
 
 WhereClause. WhereClause ::= "where" Expression ;
 
-separator nonempty ExprMVar "," ;
-GroupbyClause. GroupbyClause ::= "group" "by" [ExprMVar] MaybeGroupAs ;
+separator nonempty ExprMVarMAt "," ;
+GroupbyClause. GroupbyClause ::= "group" "by" [ExprMVarMAt] MaybeGroupAs ;
 IsMGroup. MGroup ::= GroupbyClause ;
 NoMGroup. MGroup ::=               ;
 

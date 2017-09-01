@@ -103,7 +103,7 @@ dataSourceParser =
   (fmap Many $ pure parseableFiles)
   where
     userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
-    manyFilesParser = option (fmap Many $ many str) (short 'f' <> metavar "FILE ... FILE")
+    manyFilesParser = option (fmap (Many . pure)  str) (short 'f' <> metavar "FILE ... FILE") -- TODO revert
 
 onlyErrorParser :: Parser Bool
 onlyErrorParser = flag False True (short 'e')
@@ -141,6 +141,7 @@ main = do
   putStrLn $ show args -- TODO remove
 
   options <- parseOptions
+
 
   filesToTest <- case dataSource options of
     Many files -> return files
