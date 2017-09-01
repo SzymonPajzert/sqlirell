@@ -24,34 +24,35 @@ CaseExpr. Expression ::= CaseExpr                               ;
 QuanExpr. Expression ::= QuantExpr                              ;
 
 -- operator expression
-PathOpExpr.   OpExpr13 ::= PathExpr ;
-ExistsOpExpr. OpExpr12 ::= "exists" OpExpr13 ;
-ExponeOpExpr. OpExpr11 ::= OpExpr12 "^" OpExpr11 ; -- TODO check associativity
-MultipOpExpr. OpExpr10 ::= OpExpr10 "*" OpExpr11 ;
-DivisiOpExpr. OpExpr10 ::= OpExpr10 "/" OpExpr11 ;
-ModuloOpExpr. OpExpr10 ::= OpExpr10 "%" OpExpr11 ;
-AdditiOpExpr. OpExpr9 ::= OpExpr9 "+" OpExpr10 ;
-SubstrOpExpr. OpExpr9 ::= OpExpr9 "-" OpExpr10 ;
-NegationExpr. OpExpr8 ::= "-" OpExpr10 ;
--- TODO PositiveExpr. OpExpr9 ::= "+" OpExpr10 ;
+PathOpExpr.   OpExpr14 ::= PathExpr ;
+ExistsOpExpr. OpExpr13 ::= "exists" OpExpr14 ;
+ExponeOpExpr. OpExpr12 ::= OpExpr13 "^" OpExpr12 ; -- TODO check associativity
+MultipOpExpr. OpExpr11 ::= OpExpr11 "*" OpExpr12 ;
+DivisiOpExpr. OpExpr11 ::= OpExpr11 "/" OpExpr12 ;
+ModuloOpExpr. OpExpr11 ::= OpExpr11 "%" OpExpr12 ;
+AdditiOpExpr. OpExpr10 ::= OpExpr10 "+" OpExpr11 ;
+SubstrOpExpr. OpExpr10 ::= OpExpr10 "-" OpExpr11 ;
+NegationExpr. OpExpr9 ::= "-" OpExpr11 ;
+PositiveExpr. OpExpr9 ::= "+" OpExpr11 ;
 
 YIs. Is ::= "is" ;
 NIs. Is ::= "is" "not" ;
 
-ConcatOpExpr. OpExpr8 ::= OpExpr8 "||" OpExpr9 ;
-IsNullOpExpr. OpExpr6 ::= OpExpr7 Is "null"    ;
-IsMissOpExpr. OpExpr6 ::= OpExpr7 Is "missing" ;
-IsUnknOpExpr. OpExpr5 ::= OpExpr7 Is "unknown" ;
-IsBtwnOpExpr. OpExpr4 ::= OpExpr5 "between" OpExpr5 "and" OpExpr5 ;
-NoBtwnOpExpr. OpExpr4 ::= OpExpr5 "not between" OpExpr5 "and" OpExpr5 ; -- TODO do smth
-IsEquaOpExpr. OpExpr3 ::= OpExpr4 "=" OpExpr4 ;
-NoEquaOpExpr. OpExpr3 ::= OpExpr4 "~=" OpExpr4 ;
-NoEquaOpExpr. OpExpr3 ::= OpExpr4 "!=" OpExpr4 ;
-NoEquaOpExpr. OpExpr3 ::= OpExpr4 "<>" OpExpr4 ;
-GraterOpExpr. OpExpr3 ::= OpExpr4 ">" OpExpr4 ;
-GrOrEqOpExpr. OpExpr3 ::= OpExpr4 ">=" OpExpr4 ;
-SmalerOpExpr. OpExpr3 ::= OpExpr4 "<" OpExpr4 ;
-SmOrEqOpExpr. OpExpr3 ::= OpExpr4 "<=" OpExpr4 ; 
+ConcatOpExpr. OpExpr9 ::= OpExpr9 "||" OpExpr10 ;
+IsNullOpExpr. OpExpr7 ::= OpExpr8 Is "null"    ;
+IsMissOpExpr. OpExpr7 ::= OpExpr8 Is "missing" ;
+IsUnknOpExpr. OpExpr6 ::= OpExpr8 Is "unknown" ;
+IsBtwnOpExpr. OpExpr5 ::= OpExpr6 "between" OpExpr6 "and" OpExpr6 ;
+NoBtwnOpExpr. OpExpr5 ::= OpExpr6 "not" "between" OpExpr6 "and" OpExpr6 ;
+
+IsEquaOpExpr. OpExpr4 ::= OpExpr5 "=" OpExpr5 ;
+NoEquaOpExpr. OpExpr4 ::= OpExpr5 "~=" OpExpr5 ;
+NoEquaOpExpr. OpExpr4 ::= OpExpr5 "!=" OpExpr5 ;
+NoEquaOpExpr. OpExpr4 ::= OpExpr5 "<>" OpExpr5 ;
+GraterOpExpr. OpExpr4 ::= OpExpr5 ">" OpExpr5 ;
+GrOrEqOpExpr. OpExpr4 ::= OpExpr5 ">=" OpExpr5 ;
+SmalerOpExpr. OpExpr4 ::= OpExpr5 "<" OpExpr5 ;
+SmOrEqOpExpr. OpExpr4 ::= OpExpr5 "<=" OpExpr5 ;
 IsLikeOpExpr. OpExpr3 ::= OpExpr4 "like" OpExpr4 ;
 NoLikeOpExpr. OpExpr3 ::= OpExpr4 "not" "like" OpExpr4 ;
 IsIn__OpExpr. OpExpr3 ::= OpExpr4 "in" OpExpr4 ;
@@ -61,7 +62,7 @@ NegatiOpExp. OpExpr2 ::= "not" OpExpr3 ;
 ConiunOpExp. OpExpr1 ::= OpExpr1 "and" OpExpr2 ;
 AlternOpExp. OpExpr ::= OpExpr "or" OpExpr1 ;
 
-coercions OpExpr 13 ;
+coercions OpExpr 14 ;
 
 PrimaPathExp. PathExpr ::= PrimaryExpr ;
 FieldPathExp. PathExpr ::= PathExpr "." VariableRef ;
@@ -87,7 +88,7 @@ NoEndQuentExpr. QuaneExpr ::= QuantExprHelp ;
 -- IsMEnd. MEnd ::= "end" ;
 -- TODO NoMEnd. MEnd ::= ;
 
-separator nonempty QuantVariable "," ; 
+separator nonempty QuantVariable "," ;
 QuantExprHelp. QuantExprHelp ::= ExprQualifier [QuantVariable] "satisfies" Expression ;
 
 QuantVariable. QuantVariable ::= VariableRef "in" Expression ;
@@ -100,7 +101,7 @@ EveryExprQuar. ExprQualifier ::= "every" ;
 
 {-                     Primary Expressions                       -}
 LiteralPrimaryExpr. PrimaryExpr1  ::= Literal                      ;
-VariablPrimaryExpr. PrimaryExpr1  ::= VariableRef                  ; 
+VariablPrimaryExpr. PrimaryExpr1  ::= VariableRef                  ;
 SubquerPrimaryExpr. PrimaryExpr2  ::= SelectStatement1             ;
 FunCallPrimaryExpr. PrimaryExpr   ::= PathExpr "(" [ Expression ] ")" ;
 ConstruPrimaryExpr. PrimaryExpr1  ::= Constructor                  ;
@@ -108,7 +109,7 @@ ConstruPrimaryExpr. PrimaryExpr1  ::= Constructor                  ;
 _. PrimaryExpr  ::= PrimaryExpr1;
 _. PrimaryExpr1 ::= PrimaryExpr2;
 
-{-                     .  Literal                                -} 
+{-                     .  Literal                                -}
 DStringLiteral.  Literal ::= DoubleString ;
 SStringLiteral.  Literal ::= SingleString ;
 IntegeLiteral.  Literal ::= Integer ;
@@ -123,15 +124,15 @@ FalseLiteral.   Literal ::= "false" ;
 DoubleQuoteString. StringLiteral ::= "\"" Identifier "\"" ;
 SingleQuoteString. StringLiteral ::= "\'" Identifier "\'" ;
 
-IntegerLiteral. IntegerLiteral ::= Integer ; 
+IntegerLiteral. IntegerLiteral ::= Integer ;
 
 -- TODO: FloatLiteral DoubleLiteral
 
 {-                     .  Constructor                            -}
-ArrayConstr. Constructor       ::= "[" [ Expression ] "]"  	      ;
+ArrayConstr. Constructor       ::= "[" [ Expression ] "]"		  ;
 MultisetConst. Constructor     ::= "{{" [ Expression ]"}}"        ;
 
-separator FieldBinding "," 	   	   		  			 			  ;
+separator FieldBinding ","										  ;
 ObjectConstr. Constructor      ::= "{" [ FieldBinding ] "}"       ;
 FieldBinding. FieldBinding ::= Expression ":" Expression		  ;
 
@@ -140,32 +141,32 @@ FieldBinding. FieldBinding ::= Expression ":" Expression		  ;
 -- TODO find more effective way to do maybes
 SelectStmt. SelectStatement ::=
 	MWithClause
-   	SelSetOper
-	MOrderbyClause
+	SelSetOper
+	MOrder
 	MLimitClause                                                  ;
 
-separator UnionedSets ""                                            ;  
+separator UnionedSets ""                                            ;
 SelSetOper. SelSetOper ::= SelectBlock [UnionedSets]                ;
 SelBlockUnionedSets. UnionedSets ::= "union" "all" SelectBlock      ;
 SubqueryUnionedSets. UnionedSets ::= "union" "all" SelectStatement1 ;
 
 _. SelectStatement1           ::= "(" SelectStatement ")"         ;
 
-FirstSelBlock. SelectBlock ::= SelClause MFromDefVal MWhere MGroupDefValHaving ;
-SeconSelBlock. SelectBlock ::= FromClause MDefValClause MWhere MGroupDefValHaving SelClause ;
+FirstSelBlock. SelectBlock ::= SelClause MFromDefVal MWhere MGroup MOrder MDefVal MHaving ;
+SeconSelBlock. SelectBlock ::= FromClause MDefVal MWhere MGroup MOrder MDefVal MHaving SelClause ;
 
-IsMFromDefVal. MFromDefVal ::= FromClause MDefValClause ;
+IsMFromDefVal. MFromDefVal ::= FromClause MDefVal ;
 NoMFromDefVal. MFromDefVal ::=                          ;
 
 IsMWhere. MWhere ::= WhereClause ;
 NoMWhere. MWhere ::=             ;
 
-IsMGroupDefValHaving. MGroupDefValHaving ::= GroupbyClause MDefValClause MHavingClause ;
-NoMGroupDefValHaving. MGroupDefValHaving ::=                                           ;
+IsMGroupDefValHaving. MGroupDefValHaving ::= GroupbyClause MDefVal MHaving ;
+NoMGroupDefValHaving. MGroupDefValHaving ::=                               ;
 
-LetMDefValClause. MDefValClause ::= LetClause  ;
-WitMDefValClause. MDefValClause ::= WithClause ;
-NonMDefValClause. MDefValClause ::=            ;
+LetMDefVal. MDefVal ::= LetClause  ;
+WitMDefVal. MDefVal ::= WithClause ;
+NonMDefVal. MDefVal ::=            ;
 
 SelClause. SelClause ::= "select" MTypeSelClause SelRegOrVal ;
 
@@ -180,20 +181,20 @@ separator nonempty Projection "," ;
 SelReg. SelReg ::= [Projection]   ;
 
 ValueSelValType. SelValType ::= "value"		;
-ElemtSelValType. SelValType ::= "element" 	;
-Raw__SelValType. SelValType ::= "raw" 		;
+ElemtSelValType. SelValType ::= "element"	;
+Raw__SelValType. SelValType ::= "raw"		;
 
 SelVal. SelVal        ::= SelValType Expression				;
 AllProjection. Projection ::= "*"							;
 ExpProjection. Projection ::= Expression MAsIdentifier ;
 
-NoMAsIdent. MAsIdentifier ::=  	             ;
+NoMAsIdent. MAsIdentifier ::=				 ;
 IsMAsIdent. MAsIdentifier ::= MAs Identifier ;
 
 NoMAs. MAs ::=      ;
 IsMAs. MAs ::= "as" ;
 
-separator nonempty FromTerm "," ; 
+separator nonempty FromTerm "," ;
 FromClause. FromClause ::= "from" [FromTerm] ;
 
 separator FromTermJoin "" ;
@@ -223,7 +224,7 @@ InnerJoinType. JoinType ::= "inner"        ;
 LeftNJoinType. JoinType ::= "left"         ;
 LeftIJoinType. JoinType ::= "left" "outer" ;
 
-separator nonempty WithElement "," ; 
+separator nonempty WithElement "," ;
 WithClause. WithClause ::= "with" [WithElement] ;
 
 IsMWithClause. MWithClause ::= WithClause ;
@@ -231,16 +232,18 @@ NoMWithClause. MWithClause ::=            ;
 
 separator nonempty LetElement "," ;
 LetClause. LetClause ::= LetLetClause [LetElement]	;
-FirstLetLetClause. LetLetClause ::= "let"  		 	;
-SeconLetLetClause. LetLetClause ::= "letting" 	 	;
+FirstLetLetClause. LetLetClause ::= "let"			;
+SeconLetLetClause. LetLetClause ::= "letting"		;
 
-LetElement.  LetElement  ::= Variable "=" Expression 	 ;
+LetElement.  LetElement  ::= Variable "=" Expression	 ;
 WithElement. WithElement ::= Variable "as" Expression  ;
 
 WhereClause. WhereClause ::= "where" Expression ;
 
 separator nonempty ExprMVar "," ;
 GroupbyClause. GroupbyClause ::= "group" "by" [ExprMVar] MaybeGroupAs ;
+IsMGroup. MGroup ::= GroupbyClause ;
+NoMGroup. MGroup ::=               ;
 
 IsMaybeGroupAs. MaybeGroupAs ::= "group" "as" Variable MaybeVarAsRef ;
 
@@ -251,23 +254,23 @@ VarAsRef. VarAsRef ::= Variable "as" VariableRef ;
 NoMaybeVarAsRef. MaybeVarAsRef ::=                   ;
 
 HavingClause. HavingClause ::= "having" Expression ;
-IsMHavingClause. MHavingClause ::= HavingClause ;
-NoMHavingClause. MHavingClause ::=  			;
+IsMHaving. MHaving ::= HavingClause ;
+NoMHaving0. MHaving ::=				;
 
 
-IsMOrderbyClause. MOrderbyClause ::= OrderbyClause ;
-NoMOrderbyClause. MOrderbyClause ::=               ;
+IsMOrder. MOrder ::= OrderBy ;
+NoMOrder. MOrder ::=               ;
 
 separator nonempty ExprOrderbyClause "," ;
-OrderbyClause. OrderbyClause ::= "order" "by" [ExprOrderbyClause] ;
-ExprOrderByClause. ExprOrderbyClause ::= Expression MaybeOrdOrderbyClasuse ;
+OrderBy. OrderBy ::= "order" "by" [ExprOrderbyClause] ;
+ExprOrderByClause. ExprOrderbyClause ::= Expression MaybeOrdOrderbyClause ;
 
-AscOrdClause. MaybeOrdOrderbyClasuse ::= "asc"  ;
-DesOrdClause. MaybeOrdOrderbyClasuse ::= "desc" ;
-NonOrdClause. MaybeOrdOrderbyClasuse ::=        ;
+AscOrdClause. MaybeOrdOrderbyClause ::= "asc"  ;
+DesOrdClause. MaybeOrdOrderbyClause ::= "desc" ;
+NonOrdClause. MaybeOrdOrderbyClause ::=        ;
 
 IsMLimitClause. MLimitClause ::= LimitClause ;
-NoMLimitClause. MLimitClause ::= 			 ;
+NoMLimitClause. MLimitClause ::=			 ;
 
 LimitClause. LimitClause ::= "limit" Expression MOffsetExpr ;
 

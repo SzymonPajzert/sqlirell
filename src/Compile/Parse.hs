@@ -36,7 +36,7 @@ isAllowed = all (not . isBannedWord)
     isBannedWord _                          = False
 
     bannedWords = Set.fromList
-      ["use", "drop", "create", "write", "set", "load", "insert"]
+      ["use", "drop", "create", "write", "set", "load", "insert", "delete", "connect", "feed"]
 
 lexMany file = (lex file) |>
   splitWhen isCommandDelim |>

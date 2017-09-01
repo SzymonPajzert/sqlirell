@@ -3,18 +3,25 @@
 module Main where
 
 import Prelude hiding (log, all)
-import System.Console.ANSI
-import Control.Monad.Writer
-import System.Environment (getArgs)
-import System.Exit (exitSuccess, exitFailure)
+
 import Options.Applicative
-import Control.Applicative ((<|>), many)
+
+import Control.Monad.Writer
+import Control.Applicative ()
+
+import Data.List (groupBy)
+import Data.List.Split (splitOn)
+import Data.Function (on)
 
 import Text.Printf
 
-import Compile.Parse (parseComm, Err(..))
+import System.Console.ANSI
+import System.Environment (getArgs)
+import System.Exit (exitSuccess, exitFailure)
 
-import Util ((|>), (|>>))
+import Compile.Parse (parseComm, Err(..))
+import Util ((|>>), (|>))
+
 
 type FileName = String
 
@@ -33,14 +40,19 @@ helpTestFile fileCont =
        return False
      Ok _ -> return True)
 
-type Result = (Int, Int)
+type Range = (Int, Int)
+data Result = Result
+  { range :: Range
+  , maybeError :: [String]
+  , fileName :: FileName
+  }
 
-testFile :: String -> IO Result
+testFile :: FileName -> IO Result
 testFile file = do
   fileCont <- readFile file
   let tests = (helpTestFile fileCont) `zip` ([1..] :: [Int])
 
-  results <- (flip mapM) tests (\(test, iden) -> do
+  pairs <- (flip mapM) tests (\(test, iden) -> do
      let (result, logs) = runWriter test
 
      let color = if result then Green else Red
@@ -50,9 +62,12 @@ testFile file = do
 
      mapM_ putStrLn logs
 
-     return result)
+     return (result, logs))
 
-  return (length (filter id results), length results)
+  let (results, logs) = unzip pairs
+
+  let range = (length (filter id results), length results)
+  return (Result range (concat logs) file)
 
 files :: FilePath -> [FileName] -> [FilePath]
 files path names = do
@@ -65,7 +80,7 @@ noComments = filter pred
     pred ('-':'-':_) = False
     pred _           = True
 
-percentage :: Result -> String
+percentage :: Range -> String
 percentage (goodN, allN) = "[" ++
   printf "%.2f" ((fromIntegral (100 * goodN) / (fromIntegral allN)) :: Double)
   ++ "%]"
@@ -88,7 +103,7 @@ dataSourceParser =
   (fmap Many $ pure parseableFiles)
   where
     userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
-    manyFilesParser = option (fmap Many $ many str) (short 'f' <> metavar "MANYFILES")
+    manyFilesParser = option (fmap Many $ many str) (short 'f' <> metavar "FILE ... FILE")
 
 onlyErrorParser :: Parser Bool
 onlyErrorParser = flag False True (short 'e')
@@ -98,6 +113,26 @@ parseOptions = execParser $ info (helper <*> commandOptsParser) commandOptsInfo
   where
     commandOptsParser = CommandOptions <$> dataSourceParser <*> onlyErrorParser
     commandOptsInfo = fullDesc <> progDesc "SQLirell tester"
+
+generateFormat :: String -> [FormatCommands]
+generateFormat ('{':number:'}':rest)  = (Paste $ fromEnum number - 48) : (generateFormat rest)
+generateFormat (c : rest) = (Normal c) : (generateFormat rest)
+generateFormat [] = []
+
+data FormatCommands
+  = Normal Char
+  | Paste Int
+
+nth :: Int -> [a] -> a
+nth 0 (x:_) = x
+nth n (x:xs) = nth (n-1) xs
+
+format :: String -> [String] -> String
+format fmt args = do
+  f <- generateFormat fmt
+  case f of
+    Normal c -> return c
+    Paste word -> nth word args
 
 main :: IO ()
 main = do
@@ -113,22 +148,33 @@ main = do
 
   results <- mapM testFile filesToTest
 
-  let (good, all) = unzip results
+  let (good, all) = unzip $ map range results
   let goodNumber = sum good
   let allNumber  = sum all
 
   putStrLn ""
-  putStrLn $ (show goodNumber) ++ "/" ++ (show allNumber) ++ " " ++ (percentage (goodNumber, allNumber)) ++ " tests passed"
+  putStrLn $ format "{0}/{1} {2} tests passed"
+    [show goodNumber, show allNumber, percentage (goodNumber, allNumber)]
+
+  if onlyError options then do
+    let errors = map extract_data results |> concat |> group
+
+    let print_error (error, files) = format "{0} [{1}]" [error, show $ length files]
+
+    mapM_ (putStrLn . print_error) errors
+  else return ()
 
   exitSuccess
 
 
-usage :: IO ()
-usage = do
-  putStrLn $ unlines
-    [ "usage: Call with one of the following argument combinations:"
-    , "  -h --help          Display this help message."
-    , "  (no arguments)     Parse content of default files"
-    , "  -p (files)         Parse content of user given files"
-    ]
-  exitFailure
+-- TODO move to utils
+group :: Eq a => [(a, b)] -> [(a, [b])]
+group list = do
+  grouped <- groupBy ((==) `on` fst) list
+  return (fst $ head grouped, map snd grouped)
+
+extract_data (Result _ errors file) = do
+  error <- errors
+  let split = splitOn "before " error
+  guard (length(split) == 2)
+  return (last split, file)

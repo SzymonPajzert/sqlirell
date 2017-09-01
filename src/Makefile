@@ -1,7 +1,8 @@
 all: grammar parse-test
 
 parse-test: Test/Grammar.hs grammar
-	ghc --make Test/Grammar.hs -o parse-test
+	stack build
+	cp /home/svp/Programming/sqlirell/.stack-work/install/x86_64-linux/lts-6.35/7.10.3/bin/sqlirell-test-parse ./parse-test
 
 grammar:
 	bnfc -d grammar.cf
