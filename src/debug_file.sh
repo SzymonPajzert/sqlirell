@@ -2,7 +2,14 @@
 
 file=$1
 
-export GRAM_DEBUG=d
-make
-export GRAM_DEBUG=
-./parse-test -p ${file}
+if [ $file = "debug" ]; then
+	echo "hehe"
+	export GRAM_DEBUG=d
+else
+	echo "huhu"
+	export GRAM_DEBUG=""
+fi
+
+echo $GRAM_DEBUG
+make grammar
+stack build

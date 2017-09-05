@@ -47,20 +47,21 @@ data Result = Result
   , fileName :: FileName
   }
 
-testFile :: FileName -> IO Result
-testFile file = do
+testFile :: Bool -> FileName -> IO Result
+testFile ignoreSuccess file = do
   fileCont <- readFile file
   let tests = (helpTestFile fileCont) `zip` ([1..] :: [Int])
 
   pairs <- (flip mapM) tests (\(test, iden) -> do
      let (result, logs) = runWriter test
 
-     let color = if result then Green else Red
-     setSGR [SetColor Foreground Vivid color]
-     putStrLn $ "[" ++ file ++ "][" ++ (show iden) ++ "]"
-     setSGR [Reset]
+     if result && ignoreSuccess then return () else do
+       let color = if result then Green else Red
+       setSGR [SetColor Foreground Vivid color]
+       putStrLn $ "[" ++ file ++ "][" ++ (show iden) ++ "]"
+       setSGR [Reset]
 
-     mapM_ putStrLn logs
+       mapM_ putStrLn logs
 
      return (result, logs))
 
@@ -92,7 +93,8 @@ data DataSource
 
 data CommandOptions = CommandOptions
   { dataSource :: DataSource
-  , onlyError  :: Bool
+  , ignoreSuccess  :: Bool
+  , errorSummary :: Bool
   }
 
 
@@ -105,14 +107,13 @@ dataSourceParser =
     userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
     manyFilesParser = option (fmap (Many . pure)  str) (short 'f' <> metavar "FILE ... FILE") -- TODO revert
 
-onlyErrorParser :: Parser Bool
-onlyErrorParser = flag False True (short 'e')
-
 parseOptions :: IO CommandOptions
 parseOptions = execParser $ info (helper <*> commandOptsParser) commandOptsInfo
   where
-    commandOptsParser = CommandOptions <$> dataSourceParser <*> onlyErrorParser
+    commandOptsParser = CommandOptions <$> dataSourceParser <*> ignoreSuccessParser <*> errorSummaryParser
     commandOptsInfo = fullDesc <> progDesc "SQLirell tester"
+    ignoreSuccessParser = flag False True (short 'i')
+    errorSummaryParser = flag False True (short 'e')
 
 generateFormat :: String -> [FormatCommands]
 generateFormat ('{':number:'}':rest)  = (Paste $ fromEnum number - 48) : (generateFormat rest)
@@ -147,7 +148,7 @@ main = do
     Many files -> return files
     One fileOfFiles -> (readFile fileOfFiles) |>> lines |>> noComments
 
-  results <- mapM testFile filesToTest
+  results <- mapM (testFile (ignoreSuccess options)) filesToTest
 
   let (good, all) = unzip $ map range results
   let goodNumber = sum good
@@ -157,7 +158,7 @@ main = do
   putStrLn $ format "{0}/{1} {2} tests passed"
     [show goodNumber, show allNumber, percentage (goodNumber, allNumber)]
 
-  if onlyError options then do
+  if errorSummary options then do
     let errors = map extract_data results |> concat |> group
 
     let print_error (error, files) = format "{0} [{1}]" [error, show $ length files]
