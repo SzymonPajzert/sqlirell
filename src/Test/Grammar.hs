@@ -1,4 +1,7 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wall -fwarn-tabs -fdefer-typed-holes #-}
+
+-- TODO ask BNFC on github about {{ and { situation
 
 module Main where
 
@@ -9,11 +12,12 @@ import Options.Applicative
 import Control.Monad.Writer
 import Control.Applicative ()
 
-import Data.List (groupBy)
+import Data.List (groupBy, sortOn)
 import Data.List.Split (splitOn)
 import Data.Function (on)
 
 import Text.Printf
+import Data.Text.Format
 
 import System.Console.ANSI
 import System.Environment (getArgs)
@@ -115,26 +119,6 @@ parseOptions = execParser $ info (helper <*> commandOptsParser) commandOptsInfo
     ignoreSuccessParser = flag False True (short 'i')
     errorSummaryParser = flag False True (short 'e')
 
-generateFormat :: String -> [FormatCommands]
-generateFormat ('{':number:'}':rest)  = (Paste $ fromEnum number - 48) : (generateFormat rest)
-generateFormat (c : rest) = (Normal c) : (generateFormat rest)
-generateFormat [] = []
-
-data FormatCommands
-  = Normal Char
-  | Paste Int
-
-nth :: Int -> [a] -> a
-nth 0 (x:_) = x
-nth n (x:xs) = nth (n-1) xs
-
-format :: String -> [String] -> String
-format fmt args = do
-  f <- generateFormat fmt
-  case f of
-    Normal c -> return c
-    Paste word -> nth word args
-
 main :: IO ()
 main = do
   args <- getArgs
@@ -156,12 +140,18 @@ main = do
 
   putStrLn ""
   putStrLn $ format "{0}/{1} {2} tests passed"
-    [show goodNumber, show allNumber, percentage (goodNumber, allNumber)]
+    (show goodNumber, show allNumber, percentage (goodNumber, allNumber))
 
   if errorSummary options then do
-    let errors = map extract_data results |> concat |> group
-
-    let print_error (error, files) = format "{0} [{1}]" [error, show $ length files]
+    let errors = map extract_data results
+          |> concat
+          |> group
+          |> sortOn (\(_, files) -> length files)
+    
+    let print_error (error, files) =
+          format "[0]\n[1]" (first_line, next_lines)
+          where first_line = format "{0} [{1}]:" (error, show $ length files)
+                rest_lines = unlines $ map (\file -> format "  {0}" file) files
 
     mapM_ (putStrLn . print_error) errors
   else return ()
@@ -170,13 +160,16 @@ main = do
 
 
 -- TODO move to utils
-group :: Eq a => [(a, b)] -> [(a, [b])]
+group :: Ord a => [(a, b)] -> [(a, [b])]
 group list = do
-  grouped <- groupBy ((==) `on` fst) list
+  grouped <- list
+    |> sortOn fst
+    |> groupBy ((==) `on` fst) 
   return (fst $ head grouped, map snd grouped)
 
 extract_data (Result _ errors file) = do
   error <- errors
   let split = splitOn "before " error
   guard (length(split) == 2)
-  return (last split, file)
+  let failing_string = init $ last split
+  return (failing_string, file)

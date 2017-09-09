@@ -14,6 +14,9 @@ token SingleString '\'' ((char - '\'') | ('\\' '\'') )* '\'' ;
 token FloatNum (digit)* ('.' digit (digit)* )? ( 'f' | 'F' ) ;
 token DoubleNum (digit)* '.' digit (digit)* ;
 
+token OpenSet '{' '{'  ;
+token CloseSet '}' '}' ;
+
 ExpQuer. Query ::= Expression ;
 
 SelQuer. Query ::= SelectStatement ;
@@ -131,8 +134,8 @@ IntegerLiteral. IntegerLiteral ::= Integer ;
 -- TODO: FloatLiteral DoubleLiteral
 
 {-                     .  Constructor                            -}
-ArrayConstr. Constructor       ::= "[" [ Expression ] "]"		  ;
-MultisetConst. Constructor     ::= "{{" [ Expression ]"}}"        ;
+ArrayConstr. Constructor     ::= "[" [ Expression ] "]"		      ;
+MultisetConst. Constructor    ::= OpenSet [ Expression ] CloseSet ;
 
 separator FieldBinding ","										  ;
 ObjectConstr. Constructor      ::= "{" [ FieldBinding ] "}"       ;
