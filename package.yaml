@@ -1,0 +1,21 @@
+name: sqlirell
+version: 0.1.0.0
+
+ghc-options: -Wall
+
+dependencies:
+  base
+
+executables:
+  sqlirell-test-parse:
+    source-dirs: src/
+    main: Test/Grammar.hs
+    dependencies:
+      - optparse-applicative
+      - mtl
+      - split
+      - ansi-terminal
+      - ghc
+      - array
+      - containers
+      - text-format
