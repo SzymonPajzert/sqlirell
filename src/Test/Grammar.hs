@@ -37,12 +37,12 @@ log string = tell [string]
 
 helpTestFile :: String -> [Writer [String] Bool]
 helpTestFile fileCont =
-  (flip map) (parseComm fileCont) (\parsed -> case parsed of
-     Bad err -> do
-       log "Compilation error:"
-       log $ show err
-       return False
-     Ok _ -> return True)
+  map (\parsed -> case parsed of
+Bad err -> do
+  log "Compilation error:"
+  log $ show err
+  return False
+Ok _ -> return True) (parseComm fileCont)
 
 type Range = (Int, Int)
 data Result = Result
@@ -54,9 +54,9 @@ data Result = Result
 testFile :: Bool -> FileName -> IO Result
 testFile ignoreSuccess file = do
   fileCont <- readFile file
-  let tests = (helpTestFile fileCont) `zip` ([1..] :: [Int])
+  let tests = helpTestFile fileCont `zip` ([1..] :: [Int])
 
-  pairs <- (flip mapM) tests (\(test, iden) -> do
+  pairs <- mapM (\(test, iden) -> do
      let (result, logs) = runWriter test
 
      if result && ignoreSuccess then return () else do
@@ -67,7 +67,7 @@ testFile ignoreSuccess file = do
 
        mapM_ putStrLn logs
 
-     return (result, logs))
+     return (result, logs)) tests
 
   let (results, logs) = unzip pairs
 
@@ -87,7 +87,7 @@ noComments = filter pred
 
 percentage :: Range -> String
 percentage (goodN, allN) = "[" ++
-  printf "%.2f" ((fromIntegral (100 * goodN) / (fromIntegral allN)) :: Double)
+  printf "%.2f" ((fromIntegral (100 * goodN) / fromIntegral allN) :: Double)
   ++ "%]"
 
 
@@ -106,7 +106,7 @@ dataSourceParser :: Parser DataSource
 dataSourceParser =
   userFilesParser <|>
   manyFilesParser <|>
-  (fmap Many $ pure parseableFiles)
+  fmap Many (pure parseableFiles)
   where
     userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
     manyFilesParser = option (fmap (Many . pure)  str) (short 'f' <> metavar "FILE ... FILE") -- TODO revert
@@ -123,14 +123,14 @@ main :: IO ()
 main = do
   args <- getArgs
 
-  putStrLn $ show args -- TODO remove
+  print args -- TODO remove
 
   options <- parseOptions
 
 
   filesToTest <- case dataSource options of
     Many files -> return files
-    One fileOfFiles -> (readFile fileOfFiles) |>> lines |>> noComments
+    One fileOfFiles -> readFile fileOfFiles |>> lines |>> noComments
 
   results <- mapM (testFile (ignoreSuccess options)) filesToTest
 
@@ -142,19 +142,18 @@ main = do
   putStrLn $ format "{0}/{1} {2} tests passed"
     (show goodNumber, show allNumber, percentage (goodNumber, allNumber))
 
-  if errorSummary options then do
+  Control.Monad.when (errorSummary options) $ do
     let errors = map extract_data results
           |> concat
           |> group
           |> sortOn (\(_, files) -> length files)
-    
+
     let print_error (error, files) =
           format "[0]\n[1]" (first_line, next_lines)
           where first_line = format "{0} [{1}]:" (error, show $ length files)
                 rest_lines = unlines $ map (\file -> format "  {0}" file) files
 
     mapM_ (putStrLn . print_error) errors
-  else return ()
 
   exitSuccess
 
@@ -164,12 +163,12 @@ group :: Ord a => [(a, b)] -> [(a, [b])]
 group list = do
   grouped <- list
     |> sortOn fst
-    |> groupBy ((==) `on` fst) 
+    |> groupBy ((==) `on` fst)
   return (fst $ head grouped, map snd grouped)
 
 extract_data (Result _ errors file) = do
   error <- errors
   let split = splitOn "before " error
-  guard (length(split) == 2)
+  guard (lengthsplit == 2)
   let failing_string = init $ last split
   return (failing_string, file)

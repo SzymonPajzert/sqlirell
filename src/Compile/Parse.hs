@@ -19,16 +19,16 @@ repl :: Char -> Char
 repl c = if c == '\'' then '"' else c
 
 lex :: String -> [Token]
-lex = myLexer . (map repl) . (map toLower)
+lex = myLexer . map (repl . toLower)
 
 parse :: String -> Err Abs.Program
 parse = pProgram . lex
 
 commandDelim :: Tok
-commandDelim = let [(PT _ token)] = myLexer ";"in token
+commandDelim = let [PT _ token] = myLexer ";"in token
 
 isCommandDelim :: Token -> Bool
-isCommandDelim (PT _ token) = (token == commandDelim)
+isCommandDelim (PT _ token) = token == commandDelim
 isCommandDelim _            = False
 
 -- TODO create better solution
@@ -43,10 +43,10 @@ isAllowed = all (not . isBannedWord)
       ["use", "drop", "create", "write", "set", "load", "insert", "delete", "connect", "feed", "function", "into", "start"]
       -- TODO support count(*)
 
-lexMany file = (lex file) |>
+lexMany file = lex file |>
   splitWhen isCommandDelim |>
   filter (not . null) |>
-  map (\command -> command ++ [(PT (Pn 0 0 0) commandDelim)]) |>
+  map (\command -> command ++ [PT (Pn 0 0 0) commandDelim]) |>
   filter isAllowed
 
 parseComm :: String -> [Err Program]
