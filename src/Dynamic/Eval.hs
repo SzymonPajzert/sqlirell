@@ -19,14 +19,21 @@ run expression = runReader (eval expression) emptyEnv
 newtype RuntimeError = RuntimeError ()
 type RunErr a = Err RuntimeError a
 
-isIdent :: Value -> Bool
-isIdent = _
-isMissing :: Value -> Bool
-isMissing = _
 
+isMissing :: Expression -> Bool
+isMissing (ValueExpr Missing) = True
+isMissing _ = False
+
+
+evalPair (bind, exp) = do
+  value <- eval exp
+  return (bind, value)
 
 eval :: Expression -> EnvReader Value
-eval (ValueExpr value) = return value
+eval (ValueExpr value) = case value of
+  ObjectValue object -> object |> mapM (fmap ValueExpr . eval) |> fmap ObjectValue
+  _ -> return value
+
 eval (VariableBinding identifier) = getBinding identifier
    
 eval (ComprExpr (ObjectComprehension x y iterator)) = do
@@ -40,6 +47,7 @@ eval (ComprExpr (ObjectComprehension x y iterator)) = do
   
   let binds = map getPair environments
         |> mapMaybe extractString
+        |> map (\(fst, snd) -> (fst, ValueExpr snd))
         |> filter (not . isMissing . snd) 
   
   let object = Map.fromList binds
@@ -54,6 +62,7 @@ eval (ComprExpr comprehension) = case comprehension of
 
       return $ environments
         |> map (runReader (eval x))
+        |> map ValueExpr
         |> filter (not . isMissing)
   
 
@@ -69,9 +78,13 @@ generateBinds (ArrayIterator id expression) = do
         ArrayValue array -> array
         ObjectValue object ->  map snd $ Map.toList object
         BagValue bag -> Set.toList bag
-        _ -> [] -- no bindings are generated 
-  
-  return $ map newEnv toArray
+        _ -> [] -- no bindings are generated
+
+  toArrayEval <- sequence $ map eval toArray
+
+  toArrayEval
+    |> map newEnv
+    |> return
 
 generateBinds (ObjectIterator idX idY expression) = do
   oldEnv <- ask
@@ -83,9 +96,11 @@ generateBinds (ObjectIterator idX idY expression) = do
 
   let toObject = case evaluated of
         ObjectValue object -> Map.toList object
-        _ -> [] -- no bindings are generated 
+        _ -> [] -- no bindings are generated
   
-  return $ map newEnv toObject
+  toObjectEval <- sequence $ map evalPair toObject
+  
+  return $ map newEnv toObjectEval
 
 generateBinds EmptyIterator = do
   oldEnv <- ask

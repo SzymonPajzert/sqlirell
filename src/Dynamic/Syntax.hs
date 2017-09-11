@@ -16,9 +16,9 @@ data Value
 
 -- ask whether to evaluate 
 type ObjectKey = String
-type Object = Map ObjectKey Value
-type Bag = Set Value
-type Array = [Value]
+type Object = Map ObjectKey Expression
+type Bag = Set Expression
+type Array = [Expression]
 
 type Identifier = String
 
@@ -26,7 +26,7 @@ data Expression
   = ValueExpr Value
   | VariableBinding Identifier
   | ComprExpr Comprehension
-  deriving (Show)
+  deriving (Show, Ord, Eq)
 
 data Iterator
   = ArrayIterator Identifier Expression
@@ -34,11 +34,13 @@ data Iterator
   | SequenceIterator Iterator Iterator
   | EmptyIterator
   | IteratorModifier IteratorModification Iterator
+  deriving (Ord, Eq)
 
 data IteratorModification
   = Sorting [Identifier]
   | Grouping [Identifier]
   | Numbering Identifier
+  deriving (Ord, Eq)
 
 instance Show Comprehension where
   show _ = "Comprehension"
@@ -47,6 +49,7 @@ data Comprehension
   = ObjectComprehension Expression Expression Iterator
   | ArrayComprehension Expression Iterator
   | BagComprehension Expression Iterator
+  deriving (Ord, Eq)
 
 
 data Operation
