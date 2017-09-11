@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -Wall -fwarn-tabs -fdefer-typed-holes #-}
-
 -- TODO ask BNFC on github about {{ and { situation
 
 module Main where
 
-import Prelude hiding (log, all)
+import Prelude hiding (log, all, putStrLn, unlines)
+import Data.Text.Lazy.IO (putStrLn)
 
 import Options.Applicative
 
+import Control.Monad (when)
 import Control.Monad.Writer
 import Control.Applicative ()
 
@@ -17,37 +17,36 @@ import Data.List.Split (splitOn)
 import Data.Function (on)
 
 import Text.Printf
+import Data.Text.Lazy (Text(..), unlines, pack, unpack)
 import Data.Text.Format
 
 import System.Console.ANSI
 import System.Environment (getArgs)
-import System.Exit (exitSuccess, exitFailure)
+import System.Exit (exitSuccess)
 
 import Compile.Parse (parseComm, Err(..))
-import Util ((|>>), (|>))
+import Utilities ((|>>), (|>))
 
 
 type FileName = String
 
-parseableFiles :: [FileName]
-parseableFiles = "../example/parseable" `files` ["arithmetic.sql", "collection_op.sql"]
 
-log :: String -> Writer [String] ()
+log :: Text -> Writer [Text] ()
 log string = tell [string]
 
-helpTestFile :: String -> [Writer [String] Bool]
-helpTestFile fileCont =
-  map (\parsed -> case parsed of
-Bad err -> do
-  log "Compilation error:"
-  log $ show err
-  return False
-Ok _ -> return True) (parseComm fileCont)
+helpTestFile :: String -> [Writer [Text] Bool]
+helpTestFile fileCont = map interpretResult (parseComm fileCont)
+  where
+    interpretResult (Ok _) = return True
+    interpretResult (Bad err) = do
+      log "Compilation error:"
+      log $ pack $ show err
+      return False
 
 type Range = (Int, Int)
 data Result = Result
   { range :: Range
-  , maybeError :: [String]
+  , maybeError :: [Text]
   , fileName :: FileName
   }
 
@@ -62,7 +61,7 @@ testFile ignoreSuccess file = do
      if result && ignoreSuccess then return () else do
        let color = if result then Green else Red
        setSGR [SetColor Foreground Vivid color]
-       putStrLn $ "[" ++ file ++ "][" ++ (show iden) ++ "]"
+       putStrLn $ format "[{0}][{1}" (file, show iden)
        setSGR [Reset]
 
        mapM_ putStrLn logs
@@ -104,9 +103,7 @@ data CommandOptions = CommandOptions
 
 dataSourceParser :: Parser DataSource
 dataSourceParser =
-  userFilesParser <|>
-  manyFilesParser <|>
-  fmap Many (pure parseableFiles)
+  userFilesParser <|> manyFilesParser
   where
     userFilesParser = option (fmap One str) (short 'p' <> metavar "USERFILES")
     manyFilesParser = option (fmap (Many . pure)  str) (short 'f' <> metavar "FILE ... FILE") -- TODO revert
@@ -121,12 +118,7 @@ parseOptions = execParser $ info (helper <*> commandOptsParser) commandOptsInfo
 
 main :: IO ()
 main = do
-  args <- getArgs
-
-  print args -- TODO remove
-
   options <- parseOptions
-
 
   filesToTest <- case dataSource options of
     Many files -> return files
@@ -142,14 +134,14 @@ main = do
   putStrLn $ format "{0}/{1} {2} tests passed"
     (show goodNumber, show allNumber, percentage (goodNumber, allNumber))
 
-  Control.Monad.when (errorSummary options) $ do
+  when (errorSummary options) $ do
     let errors = map extract_data results
           |> concat
           |> group
           |> sortOn (\(_, files) -> length files)
 
     let print_error (error, files) =
-          format "[0]\n[1]" (first_line, next_lines)
+          format "[0]\n[1]" (first_line, rest_lines)
           where first_line = format "{0} [{1}]:" (error, show $ length files)
                 rest_lines = unlines $ map (\file -> format "  {0}" file) files
 
@@ -166,9 +158,10 @@ group list = do
     |> groupBy ((==) `on` fst)
   return (fst $ head grouped, map snd grouped)
 
+extract_data :: Result -> [([Char], FileName)]
 extract_data (Result _ errors file) = do
   error <- errors
-  let split = splitOn "before " error
-  guard (lengthsplit == 2)
+  let split = splitOn "before " (unpack error)
+  guard (length split == 2)
   let failing_string = init $ last split
   return (failing_string, file)

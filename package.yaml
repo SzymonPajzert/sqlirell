@@ -1,21 +1,40 @@
 name: sqlirell
 version: 0.1.0.0
 
-ghc-options: -Wall -Werror
+ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes 
 
 dependencies:
-  base
+ - base
+ - array
+ - containers
+ - mtl
+ - split
+ - optparse-applicative
+ - ansi-terminal
+ - ghc
+ - text-format
+ - text
+
+library:
+  source-dirs: src/
+  exposed-modules:
+    - Dynamic.Syntax
+    - Dynamic.Eval
+    - Compile.Parse
+    - Utilities
 
 executables:
   sqlirell-test-parse:
-    source-dirs: src/
-    main: Test/Grammar.hs
+    source-dirs: test/Test/
+    main: Grammar.hs
     dependencies:
-      - optparse-applicative
-      - mtl
-      - split
-      - ansi-terminal
-      - ghc
-      - array
-      - containers
-      - text-format
+      - sqlirell
+
+tests:
+  EvalTest:
+    source-dirs: test/
+    dependencies:
+      - sqlirell
+      - HUnit
+    main:
+      EvalTest.hs

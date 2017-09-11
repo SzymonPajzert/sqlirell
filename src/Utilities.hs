@@ -1,4 +1,4 @@
-module Util where
+module Utilities ((|>>), (|>))  where
 
 infixl 5 |>>
 (|>>) :: Functor f => f a -> (a -> b) -> f b

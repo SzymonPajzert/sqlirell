@@ -12,7 +12,7 @@ import Data.List.Split (splitWhen)
 import Data.Char (toLower)
 
 import Compile.Abstract (compile, Program)
-import Util ((|>))
+import Utilities ((|>))
 
 -- TODO create better solution
 repl :: Char -> Char
