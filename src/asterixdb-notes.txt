@@ -1,3 +1,0 @@
-The usage of with clause as let clause is not documented in the syntax, but apparently allowed:
-
-asterix-app/src/test/resources/runtimets/queries_sqlpp/similarity/similarity-jaccard-check_query/similarity-jaccard-check_query.3.query.sqlpp

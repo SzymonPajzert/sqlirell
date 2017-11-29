@@ -1,7 +1,7 @@
 module Dynamic.Syntax where
 
-import Data.Map (Map)
-import Data.Set (Set)
+import           Data.Map (Map)
+import           Data.Set (Set)
 
 data Value
   = ObjectValue Object
@@ -14,7 +14,7 @@ data Value
   | AtomicBool Bool
   deriving (Show, Ord, Eq)
 
--- ask whether to evaluate 
+-- ask whether to evaluate
 type ObjectKey = String
 type Object = Map ObjectKey Expression
 type Bag = Set Expression

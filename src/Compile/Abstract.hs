@@ -1,17 +1,20 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
 -- TODO remove options_ghc from every file
 {-# OPTIONS_GHC -fdefer-typed-holes #-}
 
-module Compile.Abstract where
+module Compile.Abstract (compile, Program) where
 
-import Prelude hiding (not)
-import qualified Grammar.Abs as Abs
+import           Data.Maybe          (fromMaybe)
+import           Dynamic.Environment (EnvResult)
+import qualified Dynamic.Environment as Env
+import qualified Dynamic.Syntax      as Syn
+import qualified Grammar.Abs         as Abs
+import           Prelude             hiding (not)
 
-newtype Program = Program [Query]
+import           Utilities
 
-data Query
-  = ExpQuery Expression
-  | SelQuery SelectStatement
+newtype Program = Program [Expression]
 
 newtype Variable = Variable String
 
@@ -56,20 +59,71 @@ newtype PrimaryExpression = PrimaryExpression ()
 class Transformable a b where
   transform :: a -> b
 
-instance Transformable Abs.VariableRef Variable where
-  transform = _
+class ToMaybe a b | a -> b where
+  asMaybe :: a -> Maybe b
 
--- TODO make all transformations instances of the class Transformable
+instance ToMaybe Abs.MWithClause Abs.WithClause where
+  asMaybe (Abs.IsMWithClause clause) = Just clause
+  asMaybe (Abs.NoMWithClause)        = Nothing
+
+newtype FromDef = FromDef (Abs.FromClause, Abs.MDefVal)
+data DefVal = LetDefVal Abs.LetClause | WithDefVal Abs.WithClause
+
+instance ToMaybe Abs.MFromDefVal FromDef where
+  asMaybe = _
+
+instance ToMaybe Abs.MDefVal DefVal where
+  asMaybe = _
+
 instance Transformable Abs.Program Program where
   transform (Abs.Prog queries) = Program $ map transform queries
 
-instance Transformable Abs.Query Query where
-  transform (Abs.ExpQuer expression) = ExpQuery newExpression
-    where newExpression = transform expression
+instance Transformable Abs.Query Expression where
+  transform (Abs.ExpQuer expression) = transform expression
+  transform (Abs.SelQuer query)      = transform query
+
+instance Transformable Expression Syn.Expression where
+  transform = _
+
+instance Transformable Abs.SelectStatement Expression where
+  -- TODO
+  transform (Abs.SelectStmt mwithClause selector _ _) = result where
+    startEnv = do
+      (Abs.WithClause definitions) <- asMaybe mwithClause
+      let extract (Abs.WithElement ident val) = (ident, val)
+      return $ Env.fromList (do
+        (Abs.WithElement variable val) <- definitions
+        let (Abs.Variable (Abs.Identifier identifier)) = variable
+        let intermediate  = (transform val :: Expression)
+        let final = transform intermediate
+
+        return (identifier, final))
+
+    Abs.SelSetOper selBlock _ = selector -- TODO support unions
+
+    result = transform selBlock
 
 instance Transformable Abs.Expression Expression where
-  transform expr = case expr of
-    Abs.OperExpr opExpr -> transform opExpr
+  transform = _
+
+instance Transformable Abs.SelectBlock Expression where
+  transform block = let
+    mergeDefs = _
+
+    (select, from, define, wher, group, order, having) =
+      case block of
+        Abs.FirstSelBlock s mfd w g o d h -> let
+          (f, newD) = asMaybe mfd |> maybe (Nothing, Nothing) (\ (FromDef (from, mdef)) -> (Just from, asMaybe mdef))
+          mergedD = mergeDefs newD d
+          in (s, f, mergedD, w, g, o, h)
+        Abs.SeconSelBlock f d1 w g o d2 h s -> (s, Just f, mergeD, w, g, o, h)
+          where mergeD = mergeDefs d1 d2
+   in _
+
+instance Transformable Abs.SelClause Expression where
+  transform (Abs.SelClause mTypeSel regOrVal) = case regOrVal of
+    Abs.RegSelRegOrVal regular -> undefined
+    Abs.ValSelRegOrVal value   -> undefined
 
 instance Transformable Abs.PathExpr Expression where
   transform (Abs.PrimaPathExp primaryExp) = PrimaryExpr $ transform primaryExp
@@ -132,6 +186,7 @@ instance Transformable Abs.Expression IndexRepr where
 
 instance Transformable Abs.PrimaryExpr PrimaryExpression where
   transform = _ -- TODO
+
 
 
 compile :: Abs.Program -> Program

@@ -1,0 +1,2 @@
+language: haskell
+script: stack build && stack test && stack exec sqlirell-test-parse -- -p test-files

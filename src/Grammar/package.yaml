@@ -1,0 +1,23 @@
+name: sqlirrel-grammar
+version: 0.1.0.0
+
+ghc-options: -w
+
+dependencies:
+ - base
+ - array
+ - containers
+ - mtl
+ - split
+ - optparse-applicative
+ - ansi-terminal
+ - ghc
+ - text-format
+ - text
+
+library:
+  source-dirs: .
+  exposed-modules:
+    - Grammar.Abs
+    - Grammar.Lex
+    - Grammar.Par

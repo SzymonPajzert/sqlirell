@@ -1,28 +1,30 @@
 module Dynamic.Environment (
   Environment,
   EnvReader,
+  EnvResult,
   addBinding,
   getBindEnv,
   getBinding,
-  emptyEnv) where
+  emptyEnv,
+  fromList) where
 
-import qualified Data.Map as Map
-import Dynamic.Syntax (Identifier, Expression(..), Value(..))
-import Control.Monad.Reader
-import Data.Maybe
+import           Control.Monad.Reader
+import qualified Data.Map             as Map
+import           Data.Maybe
+import           Dynamic.Syntax       (Expression (..), Identifier, Value (..))
 
-newtype Bindings = Bindings { getMap :: (Map.Map Identifier Value) }
+newtype Bindings = Bindings { getMap :: Map.Map Identifier Expression }
 
-type EnvResult = Value
+type EnvResult = Expression
 
 instance Show Bindings where
   show (Bindings bindMap) = unlines $ map represent (Map.toList bindMap)
-    where represent (var, exp) = var ++ " -> " ++ (show exp)
+    where represent (var, expr) = var ++ " -> " ++ show expr
 
-data Environment = Environment
+newtype Environment = Environment
   { bindings :: Bindings } deriving (Show)
 
-emptyEnv :: Environment 
+emptyEnv :: Environment
 emptyEnv = Environment $ Bindings Map.empty
 
 type EnvReader a = Reader Environment a
@@ -30,14 +32,16 @@ type EnvReader a = Reader Environment a
 getBindEnv :: Identifier -> Environment -> EnvResult
 getBindEnv ident env = let
   lookupValue = Map.lookup ident $ getMap $ bindings env
-  defaultValue = Missing
+  defaultValue = ValueExpr Missing
   in fromMaybe defaultValue lookupValue
-  
+
 getBinding :: Identifier -> EnvReader EnvResult
 getBinding ident = asks (getBindEnv ident)
 
 addBinding :: Identifier -> EnvResult -> Environment -> Environment
-addBinding var exp env = env { bindings = Bindings newBindings }
-  where newBindings = Map.insert var exp (getMap $ bindings env)
+addBinding var expr env = env { bindings = Bindings newBindings }
+  where newBindings = Map.insert var expr (getMap $ bindings env)
 
-    
+fromList :: [(Identifier, Expression)] -> Environment
+fromList = foldl (flip $ uncurry addBinding) emptyEnv
+

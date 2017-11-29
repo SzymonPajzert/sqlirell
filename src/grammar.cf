@@ -88,7 +88,7 @@ CaseExprBind. CaseExprBind ::= "when" Expression "then" Expression ;
 
 {-                    Quantified Expressions                     -}
 IsEndQuantExpr. QuantExpr ::= QuantExprHelp "end";
-NoEndQuentExpr. QuaneExpr ::= QuantExprHelp ;
+NoEndQuentExpr. QuantExpr ::= QuantExprHelp ;
 
 -- IsMEnd. MEnd ::= "end" ;
 -- TODO NoMEnd. MEnd ::= ;
@@ -175,7 +175,7 @@ NonMDefVal. MDefVal ::=            ;
 
 SelClause. SelClause ::= "select" MTypeSelClause SelRegOrVal ;
 
-RegSelRegOrVal. SelRegOrVal ::= SelReg ;
+RegSelRegOrVai8l. SelRegOrVal ::= SelReg ;
 ValSelRegOrVal. SelRegOrVal ::= SelVal ;
 
 AllMTypeSelClause. MTypeSelClause ::= "all"      ;

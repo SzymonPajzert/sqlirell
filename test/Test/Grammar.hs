@@ -1,35 +1,31 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- TODO ask BNFC on github about {{ and { situation
 
-module Main where
+module Main (main) where
 
-import Prelude hiding (log, all, putStrLn, unlines)
-import Data.Text.Lazy.IO (putStrLn)
+import           Control.Applicative  ()
+import           Control.Monad        (when)
+import           Control.Monad.Writer
+import           Data.Function        (on)
+import           Data.List            (groupBy, sortOn)
+import           Data.List.Split      (splitOn)
+import           Data.Text.Lazy.IO    (putStrLn)
+import qualified Text.Format as Form
+import           Data.Text.Lazy       (Text, pack, unlines, unpack)
+import           Prelude              hiding (all, log, putStrLn, unlines)
 
-import Options.Applicative
+import           Options.Applicative
+import           System.Console.ANSI
+import           System.Exit          (exitSuccess)
+import           Text.Printf
 
-import Control.Monad (when)
-import Control.Monad.Writer
-import Control.Applicative ()
-
-import Data.List (groupBy, sortOn)
-import Data.List.Split (splitOn)
-import Data.Function (on)
-
-import Text.Printf
-import Data.Text.Lazy (Text(..), unlines, pack, unpack)
-import Data.Text.Format
-
-import System.Console.ANSI
-import System.Environment (getArgs)
-import System.Exit (exitSuccess)
-
-import Compile.Parse (parseComm, Err(..))
-import Utilities ((|>>), (|>))
+import           Compile.Parse        (Err (..), parseComm)
+import           Utilities            ((|>), (|>>))
 
 
 type FileName = String
 
+format str = pack . (Form.format str)
 
 log :: Text -> Writer [Text] ()
 log string = tell [string]
@@ -45,9 +41,9 @@ helpTestFile fileCont = map interpretResult (parseComm fileCont)
 
 type Range = (Int, Int)
 data Result = Result
-  { range :: Range
+  { range      :: Range
   , maybeError :: [Text]
-  , fileName :: FileName
+  , fileName   :: FileName
   }
 
 testFile :: Bool -> FileName -> IO Result
@@ -61,7 +57,7 @@ testFile ignoreSuccess file = do
      if result && ignoreSuccess then return () else do
        let color = if result then Green else Red
        setSGR [SetColor Foreground Vivid color]
-       putStrLn $ format "[{0}][{1}" (file, show iden)
+       putStrLn $ format "[{0}]{1}" [file, show iden]
        setSGR [Reset]
 
        mapM_ putStrLn logs
@@ -73,8 +69,8 @@ testFile ignoreSuccess file = do
   let range = (length (filter id results), length results)
   return (Result range (concat logs) file)
 
-files :: FilePath -> [FileName] -> [FilePath]
-files path names = do
+fileNames :: FilePath -> [FileName] -> [FilePath]
+fileNames path names = do
   name <- names
   return (path ++ "/" ++ name)
 
@@ -95,9 +91,9 @@ data DataSource
   | One FileName
 
 data CommandOptions = CommandOptions
-  { dataSource :: DataSource
-  , ignoreSuccess  :: Bool
-  , errorSummary :: Bool
+  { dataSource      :: DataSource
+  , doIgnoreSuccess :: Bool
+  , doErrorSummary  :: Bool
   }
 
 
@@ -121,34 +117,35 @@ main = do
   options <- parseOptions
 
   filesToTest <- case dataSource options of
-    Many files -> return files
-    One fileOfFiles -> readFile fileOfFiles |>> lines |>> noComments
+    Many files      -> return files
+    One fileOfFiles -> readFile fileOfFiles 
+      |>> lines
+      |>> noComments
+      |>> map (\file -> "../sqlirrel-tests/parseable/" ++ file)
 
-  results <- mapM (testFile (ignoreSuccess options)) filesToTest
+  results <- mapM (testFile (doIgnoreSuccess options)) filesToTest
 
   let (good, all) = unzip $ map range results
-  let goodNumber = sum good
-  let allNumber  = sum all
+  let [goodNumber, allNumber] = map sum [good, all]
 
   putStrLn ""
   putStrLn $ format "{0}/{1} {2} tests passed"
-    (show goodNumber, show allNumber, percentage (goodNumber, allNumber))
+    [show goodNumber, show allNumber, percentage (goodNumber, allNumber)]
 
-  when (errorSummary options) $ do
-    let errors = map extract_data results
+  when (doErrorSummary options) $ do
+    let errors = map extractData results
           |> concat
           |> group
-          |> sortOn (\(_, files) -> length files)
+          |> sortOn (length . snd)
 
     let print_error (error, files) =
-          format "[0]\n[1]" (first_line, rest_lines)
-          where first_line = format "{0} [{1}]:" (error, show $ length files)
-                rest_lines = unlines $ map (\file -> format "  {0}" file) files
+          format "[0]\n[1]" [first_line, rest_lines]
+          where first_line = unpack $ format "{0} [{1}]:" [error, show $ length files]
+                rest_lines = unpack $ unlines $ map (\file -> format "  {0}" [file]) files
 
     mapM_ (putStrLn . print_error) errors
 
   exitSuccess
-
 
 -- TODO move to utils
 group :: Ord a => [(a, b)] -> [(a, [b])]
@@ -158,8 +155,8 @@ group list = do
     |> groupBy ((==) `on` fst)
   return (fst $ head grouped, map snd grouped)
 
-extract_data :: Result -> [([Char], FileName)]
-extract_data (Result _ errors file) = do
+extractData :: Result -> [(String, FileName)]
+extractData (Result _ errors file) = do
   error <- errors
   let split = splitOn "before " (unpack error)
   guard (length split == 2)

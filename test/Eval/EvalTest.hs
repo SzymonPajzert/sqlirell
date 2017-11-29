@@ -1,17 +1,20 @@
-module Main where
+module Eval.EvalTest (tests) where
 
-import qualified Data.Map as Map
+import qualified Data.Map       as Map
 
-import Test.HUnit
-import Dynamic.Syntax
-import Dynamic.Eval
 
-import Utilities ((|>))
+import           Control.Arrow
+
+import           Dynamic.Eval
+import           Dynamic.Syntax
+import           Test.HUnit
+
+import           Utilities      ((|>))
 
 data EvalTestInstance = EvalTestInstance
   { description :: String
-  , expression :: Expression
-  , value :: Value
+  , expression  :: Expression
+  , value       :: Value
   }
 
 assertEval :: EvalTestInstance -> Test
@@ -22,22 +25,18 @@ assertEval testInstance = do
 tests :: Test
 tests = TestList $ [literalTests, iteratorSequenceTest]
 
-main :: IO ()
-main = do
-  runTestTT tests >>= (putStrLn . show) 
-
 literalTests :: Test
 literalTests = TestList $ map (assertEval . getInstance) descriptions
   where
-    getInstance (desc, (ValueExpr literal)) = let
+    getInstance (desc, literal) = let
       newDesc = desc ++ "'s literal"
       in EvalTestInstance newDesc (ValueExpr literal) literal
 
-    stringValue = ValueExpr $ AtomicString "string"
-    integerValue = ValueExpr $ AtomicNumber 42
-    booleanValue = ValueExpr $ AtomicBool True
-    null = ValueExpr Null
-    missing = ValueExpr Missing
+    stringValue = AtomicString "string"
+    integerValue = AtomicNumber 42
+    booleanValue = AtomicBool True
+    null = Null
+    missing = Missing
 
     descriptions = [
       ("string", stringValue),
@@ -49,14 +48,14 @@ literalTests = TestList $ map (assertEval . getInstance) descriptions
       ++ bags
       ++ arrays
 
-    objects = map (\(desc, obj) -> (desc, ValueExpr $ ObjectValue obj)) [
+    objects = map (second ObjectValue) [
       ("empty object", Map.empty),
-      ("singleton object", Map.fromList [("a", stringValue)]),
-      ("pair object", Map.fromList [("a", stringValue), ("b", missing)])]
+      ("singleton object", Map.fromList [("a", ValueExpr stringValue)]),
+      ("pair object", Map.fromList [("a", ValueExpr stringValue), ("b", ValueExpr missing)])]
 
     -- TODO
     bags = []
-    arrays = [] 
+    arrays = []
 
 
 iteratorSequenceTest :: Test

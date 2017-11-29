@@ -1,0 +1,138 @@
+-- This file has been generated from package.yaml by hpack version 0.18.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           sqlirrel
+version:        0.1.0.0
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+library
+  hs-source-dirs:
+      src/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+  exposed-modules:
+      Dynamic.Syntax
+      Dynamic.Eval
+      Compile.Parse
+      Utilities
+  other-modules:
+      Compile.Abstract
+      Compile.Compile
+      Dynamic.Conversion
+      Dynamic.Environment
+      Dynamic.Err
+      Dynamic.IdFeeder
+      Grammar.Abs
+      Grammar.ErrM
+      Grammar.Lex
+      Grammar.Lex
+      Grammar.Par
+      Grammar.Par
+      Grammar.Print
+      Grammar.Skel
+      Paths_sqlirrel
+  default-language: Haskell2010
+
+executable sqlirell
+  main-is: Main.hs
+  hs-source-dirs:
+      app/Command/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+    , sqlirrel
+  other-modules:
+      Options
+      Prompt
+  default-language: Haskell2010
+
+executable sqlirell-test-parse
+  main-is: Grammar.hs
+  hs-source-dirs:
+      test/Test/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+    , sqlirrel
+  default-language: Haskell2010
+
+test-suite EvalQuickCheck
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs:
+      test/Dynamic/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+    , sqlirrel
+    , QuickCheck
+  other-modules:
+      Generate
+  default-language: Haskell2010
+
+test-suite UnitTests
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs:
+      test/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+    , sqlirrel
+    , HUnit
+  other-modules:
+      CompileTest
+      Dynamic.Generate
+      Dynamic.Test
+      Eval.EvalTest
+      Test.Grammar
+  default-language: Haskell2010

@@ -1,0 +1,16 @@
+WITH
+  getClosure(current, relation) AS (
+    SELECT relation.next as item
+    FROM current JOIN relation
+    ON current.item == relation.first
+  )
+
+  getClosureMultiple(current, relation, n) AS (
+    IF n == 0
+    THEN current
+    ELSE getClosureMultiple(getClosure(current, relation), relation, n - 1)
+  )
+
+  inputData AS commandLineArgument()
+
+SELECT getClosureMultiple(inputData, 5);

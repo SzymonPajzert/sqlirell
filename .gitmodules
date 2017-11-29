@@ -1,0 +1,3 @@
+[submodule "sqlirrel-tests"]
+	path = sqlirrel-tests
+	url = https://github.com/SzymonPajzert/sqlirrel-tests.git

@@ -1,14 +1,17 @@
 flags: {}
-user-message: ! 'Warning (added by new or init): Specified resolver could not satisfy
-  all dependencies. Some external packages have been added as dependencies.
-
-  You can suppress this message by removing it from stack.yaml
-
-'
 extra-package-dbs: []
 packages:
 - .
 system-ghc: false
-extra-deps: []
+
+apply-ghc-options: locals # all local packages, the default
+apply-ghc-options: targets # all local packages that are targets
+apply-ghc-options: everything # applied even to snapshot and extra-deps
+
+ghc-options:
+  "sqlirrel": -Wall -fwarn-missing-signatures -fwarn-unused-binds -fwarn-unused-imports -fwarn-unused-matches -fwarn-unused-do-bind -fwarn-tabs -fdefer-typed-holes 
+
+extra-deps:
+  - text-format-simple-1.1.0
 resolver: lts-9.2
 dump-logs: all
