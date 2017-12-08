@@ -4,21 +4,23 @@ import           Data.Map (Map)
 import           Data.Set (Set)
 
 data Value
-  = ObjectValue Object
-  | BagValue Bag
-  | ArrayValue Array
+  = ObjectValue !Object
+  | BagValue !Bag
+  | ArrayValue !Array
   | Null
   | Missing
-  | AtomicString String
-  | AtomicNumber Int
-  | AtomicBool Bool
+  | AtomicString !String
+  | AtomicNumber !Double
+  | AtomicBool !Bool
   deriving (Show, Ord, Eq)
 
 -- ask whether to evaluate
+type ValueType = Value
+
 type ObjectKey = String
-type Object = Map ObjectKey Expression
-type Bag = Set Expression
-type Array = [Expression]
+type Object = Map ObjectKey ValueType
+type Bag = Set ValueType
+type Array = [ValueType]
 
 type Identifier = String
 

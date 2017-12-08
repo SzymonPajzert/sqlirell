@@ -14,6 +14,12 @@ dependencies:
  - ghc
  - text-format-simple >= 1.0.0
  - text
+ - aeson
+ - vector
+ - unordered-containers
+ - scientific
+ - bytestring
+
 
 library:
   source-dirs: src/
@@ -32,6 +38,12 @@ executables:
 
   sqlirell:
     source-dirs: app/Command/
+    main: Main.hs
+    dependencies:
+      - sqlirrel
+
+  demo:
+    source-dirs: app/Demo/
     main: Main.hs
     dependencies:
       - sqlirrel

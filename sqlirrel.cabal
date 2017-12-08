@@ -23,6 +23,11 @@ library
     , ghc
     , text-format-simple >= 1.0.0
     , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
   exposed-modules:
       Dynamic.Syntax
       Dynamic.Eval
@@ -35,6 +40,7 @@ library
       Dynamic.Environment
       Dynamic.Err
       Dynamic.IdFeeder
+      Dynamic.Import
       Grammar.Abs
       Grammar.ErrM
       Grammar.Lex
@@ -44,6 +50,30 @@ library
       Grammar.Print
       Grammar.Skel
       Paths_sqlirrel
+  default-language: Haskell2010
+
+executable demo
+  main-is: Main.hs
+  hs-source-dirs:
+      app/Demo/
+  ghc-options: -Wall -fwarn-tabs -fdefer-typed-holes
+  build-depends:
+      base
+    , array
+    , containers
+    , mtl
+    , split
+    , optparse-applicative
+    , ansi-terminal
+    , ghc
+    , text-format-simple >= 1.0.0
+    , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
+    , sqlirrel
   default-language: Haskell2010
 
 executable sqlirell
@@ -62,6 +92,11 @@ executable sqlirell
     , ghc
     , text-format-simple >= 1.0.0
     , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
     , sqlirrel
   other-modules:
       Options
@@ -84,6 +119,11 @@ executable sqlirell-test-parse
     , ghc
     , text-format-simple >= 1.0.0
     , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
     , sqlirrel
   default-language: Haskell2010
 
@@ -104,6 +144,11 @@ test-suite EvalQuickCheck
     , ghc
     , text-format-simple >= 1.0.0
     , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
     , sqlirrel
     , QuickCheck
   other-modules:
@@ -127,6 +172,11 @@ test-suite UnitTests
     , ghc
     , text-format-simple >= 1.0.0
     , text
+    , aeson
+    , vector
+    , unordered-containers
+    , scientific
+    , bytestring
     , sqlirrel
     , HUnit
   other-modules:

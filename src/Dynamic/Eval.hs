@@ -1,10 +1,12 @@
-module Dynamic.Eval (run) where
+module Dynamic.Eval (runEmpty, runWith) where
 
 import           Control.Arrow
 import           Control.Monad.Reader
 
 import           Dynamic.Environment
 import           Dynamic.Syntax
+import qualified Dynamic.Environment as Env
+
 
 import qualified Data.Map             as Map
 import           Data.Maybe           (mapMaybe)
@@ -12,8 +14,13 @@ import qualified Data.Set             as Set
 
 import           Utilities
 
-run :: Expression -> Value
-run expression = runReader (eval expression) emptyEnv
+runEmpty :: Expression -> Value
+runEmpty expression = runReader (eval expression) emptyEnv
+
+-- Runs with environment 'data' set to given value
+-- TODO
+runWith :: Expression -> Value -> Value
+runWith expression input = runReader (eval expression) (Env.fromList [("data", ValueExpr input)])
 
 isMissing :: Expression -> Bool
 isMissing (ValueExpr Missing) = True
